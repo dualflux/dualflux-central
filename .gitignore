@@ -1,0 +1,12 @@
+# Ambiente Python (recriado com "poetry install")
+.venv/
+__pycache__/
+*.pyc
+
+# Senhas e configuracoes de cada ambiente: NUNCA no Git
+.env
+
+# Banco de teste e arquivos gerados pelo Django
+db.sqlite3
+staticfiles/
+media/
