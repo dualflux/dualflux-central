@@ -1,0 +1,12 @@
+# O que NUNCA entra na imagem Docker.
+# Senhas: chegam ao container pelo Docker Compose, na hora de rodar.
+.env
+
+# Ambiente do notebook: o container instala as proprias bibliotecas.
+.venv/
+__pycache__/
+*.pyc
+
+# Historico do Git e configuracoes do editor: inuteis dentro do container.
+.git/
+.vscode/

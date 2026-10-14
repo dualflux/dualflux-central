@@ -1,0 +1,51 @@
+# ============================================================
+# DualFlux Central - ambiente de DESENVOLVIMENTO (notebook).
+# Sobe dois containers: o banco (db) e o Django (web).
+# ============================================================
+
+services:
+
+  # --- Banco de dados PostgreSQL ---
+  db:
+    # Versao fixa (nunca "latest"): atualizar banco e decisao consciente,
+    # nao algo que acontece sozinho num "docker compose pull".
+    image: postgres:17
+    # Le POSTGRES_DB, POSTGRES_USER e POSTGRES_PASSWORD do .env.
+    # Na PRIMEIRA vez que sobe, o container cria o banco e o usuario com esses valores.
+    env_file: .env
+    volumes:
+      # Os dados ficam num "volume" do Docker, fora do container:
+      # apagar ou recriar o container NAO apaga o banco.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Pergunta ao Postgres, a cada 5 s, se ele ja aceita conexoes.
+      # O "$$" e necessario no compose para a variavel ser lida DENTRO do container.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    # Sem "ports": o banco NAO fica acessivel fora da rede do Docker.
+    # So o Django (web) fala com ele, pelo nome "db".
+
+  # --- Aplicacao Django ---
+  web:
+    build: .
+    image: dualflux-central:dev
+    env_file: .env
+    ports:
+      # So 127.0.0.1 (o proprio notebook): mesma regra dos servidores DualFlux,
+      # nenhum container exposto para a rede.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Em desenvolvimento, o codigo do notebook "aparece" dentro do container:
+      # voce salva no VS Code e o Django recarrega sozinho, sem rebuild.
+      - .:/app
+    depends_on:
+      db:
+        # So inicia o Django depois que o banco responder ao healthcheck.
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
