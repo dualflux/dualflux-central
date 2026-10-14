@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",   # CSS, JavaScript e imagens
     # Nossos apps:
     "contas",  # Empresa e Usuario
+    "lojas",   # Regiao, Loja, Camera e Horario de funcionamento
 ]
 
 # ATENCAO: o modelo de Usuario personalizado (login por e-mail) precisa existir
