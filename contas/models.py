@@ -132,7 +132,18 @@ class Usuario(AbstractUser):
     )
     papel = models.CharField("papel", max_length=10, choices=Papel.choices, default=Papel.GERENTE)
 
-    # O vinculo do gerente com as lojas dele entra quando criarmos o app "lojas".
+    # Lojas que o GERENTE pode ver. O dono ve todas as lojas da empresa,
+    # entao para ele este campo fica vazio.
+    # "lojas.Loja" vai entre aspas (texto) de proposito: o app lojas ja importa
+    # o contas (Loja aponta para Empresa); se o contas importasse o lojas,
+    # um ficaria esperando o outro carregar (importacao circular, aquele erro de hoje).
+    lojas = models.ManyToManyField(
+        "lojas.Loja",
+        blank=True,
+        related_name="gerentes",
+        verbose_name="lojas",
+        help_text="So para gerente: as lojas que ele pode ver.",
+    )
 
     USERNAME_FIELD = "email"  # campo usado para entrar no sistema
     REQUIRED_FIELDS = []      # o createsuperuser pede so e-mail e senha
