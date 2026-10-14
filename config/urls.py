@@ -1,22 +1,22 @@
 """
-URL configuration for config project.
+Mapa de enderecos do DualFlux Central: qual URL chama qual tela.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+A ORDEM importa: o Django testa de cima para baixo e usa a primeira que servir.
+Por isso o endereco generico "<empresa>/" fica por ULTIMO; senao "login/"
+seria confundido com uma empresa chamada "login" (e por isso esses nomes
+sao reservados no cadastro de Empresa).
 """
+
 from django.contrib import admin
+from django.contrib.auth.views import LogoutView
 from django.urls import path
 
+from contas import views as contas_views
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),                                  # portao da equipe DualFlux
+    path("login/", contas_views.Login.as_view(), name="login"),       # portao dos clientes
+    path("logout/", LogoutView.as_view(), name="logout"),             # sair
+    path("", contas_views.inicio, name="inicio"),                     # decide para onde ir
+    path("<slug:empresa_slug>/", contas_views.empresa_inicio, name="empresa_inicio"),
 ]

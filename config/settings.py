@@ -154,3 +154,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Tipo padrao das chaves primarias: inteiro grande (aguenta bilhoes de eventos).
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Login dos clientes: para onde ir quando precisa entrar, depois de entrar e depois de sair.
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "inicio"
+LOGOUT_REDIRECT_URL = "login"

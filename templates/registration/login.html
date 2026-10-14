@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar - DualFlux{% endblock %}
+
+{% block conteudo %}
+<div class="cartao">
+  <h1>Entrar</h1>
+
+  {# Erros gerais: e-mail/senha errados, usuario desativado, empresa suspensa. #}
+  {% if form.non_field_errors %}
+    <div class="erro">{{ form.non_field_errors|join:" " }}</div>
+  {% endif %}
+
+  <form method="post">
+    {# csrf_token: protege o formulario contra envio forjado por outro site. #}
+    {% csrf_token %}
+
+    {# O campo se chama "username" porque o formulario de login do Django usa #}
+    {# esse nome fixo; por baixo, ele compara com o nosso USERNAME_FIELD (e-mail). #}
+    <label for="email">E-mail</label>
+    <input id="email" type="email" name="username" value="{{ form.username.value|default:'' }}" autofocus required>
+
+    <label for="senha">Senha</label>
+    <input id="senha" type="password" name="password" required>
+
+    {# "next": se a pessoa tentou abrir uma pagina protegida, volta para ela apos entrar. #}
+    <input type="hidden" name="next" value="{{ next }}">
+
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}
