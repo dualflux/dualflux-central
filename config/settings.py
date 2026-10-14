@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",      # mantem o usuario logado entre paginas
     "django.contrib.messages",      # mensagens do tipo "salvo com sucesso"
     "django.contrib.staticfiles",   # CSS, JavaScript e imagens
-    # Nossos apps (contas, lojas, fluxo, monitor) entram aqui nos proximos passos.
+    # Nossos apps:
+    "contas",  # Empresa e Usuario
 ]
 
 # ATENCAO: o modelo de Usuario personalizado (login por e-mail) precisa existir
@@ -60,6 +61,7 @@ INSTALLED_APPS = [
 # ate criarmos o app "contas" -- e NAO rodamos "migrate" antes disso.
 # AUTH_USER_MODEL = "contas.Usuario"
 
+AUTH_USER_MODEL = "contas.Usuario"
 
 # ------------------------------------------------------------------
 # Middlewares: "filtros" por onde toda requisicao passa, em ordem
