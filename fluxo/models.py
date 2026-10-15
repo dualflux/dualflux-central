@@ -52,3 +52,41 @@ class Evento(models.Model):
 
     def __str__(self):
         return f"{self.loja} | {self.camera.codigo} | {self.direcao} | {self.instante:%d/%m %H:%M:%S}"
+
+class VendaJanela(models.Model):
+    """
+    Vendas de UMA loja em UMA janela de 15 minutos.
+
+    So totais (quantidade de vendas e faturamento): nenhum dado de cliente
+    nem numero de cupom chega ao central.
+
+    Diferente do Evento, esta linha PODE mudar: se uma venda for cancelada
+    depois, a loja reenvia a janela e o valor novo SUBSTITUI o antigo.
+    """
+
+    # PROTECT: nao deixa apagar loja com historico de vendas.
+    loja = models.ForeignKey(Loja, on_delete=models.PROTECT, related_name="vendas_janelas")
+
+    # Inicio da janela, em UTC, sempre "redondo": 14:00, 14:15, 14:30, 14:45.
+    janela_inicio = models.DateTimeField("inicio da janela")
+
+    # Os dois valores SOMAVEIS: somando janelas chegamos a qualquer periodo.
+    # Conversao e ticket medio sao calculados depois, nunca guardados aqui.
+    transacoes = models.PositiveIntegerField("vendas (transacoes)")
+    faturamento = models.DecimalField("faturamento", max_digits=12, decimal_places=2)
+
+    # Ultima vez que a loja mandou esta janela (mostra reenvios por cancelamento).
+    atualizado_em = models.DateTimeField("atualizado em", auto_now=True)
+
+    class Meta:
+        verbose_name = "venda por janela"
+        verbose_name_plural = "vendas por janela"
+        constraints = [
+            # Uma janela so existe UMA vez por loja: o reenvio atualiza, nao duplica.
+            models.UniqueConstraint(fields=["loja", "janela_inicio"], name="venda_janela_unica_por_loja"),
+            # Garantido pelo banco: faturamento nunca negativo.
+            models.CheckConstraint(name="venda_faturamento_nao_negativo", condition=models.Q(faturamento__gte=0)),
+        ]
+
+    def __str__(self):
+        return f"{self.loja} | {self.janela_inicio:%d/%m %H:%M} | {self.transacoes} vendas | R$ {self.faturamento}"

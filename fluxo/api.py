@@ -1,12 +1,17 @@
 """
-API de ingestao de eventos:  POST /api/v1/eventos/
+API de ingestao das lojas:
+  POST /api/v1/eventos/  -> cruzamentos de linha (entrada/saida)
+  POST /api/v1/vendas/   -> vendas agregadas em janelas de 15 minutos
 
-Recebe um lote de cruzamentos enviado pelo servidor local da loja.
 Regras do contrato:
-- reenviar o mesmo lote NAO duplica (idempotencia pelo uuid);
-- camera desconhecida e criada sozinha (nome = codigo; renomeie depois no admin);
-- instante sempre com fuso (o local envia em UTC, com "Z").
+- a loja e identificada pelo TOKEN, nunca pelo JSON;
+- eventos: reenviar o mesmo lote NAO duplica (idempotencia pelo uuid);
+- eventos: camera desconhecida e criada sozinha (renomeie depois no admin);
+- vendas: reenviar uma janela SUBSTITUI o valor (corrige cancelamentos);
+- horarios sempre com fuso (o local envia em UTC, com "Z").
 """
+
+from datetime import timezone as fuso_utc
 
 from django.db import transaction
 from django.utils import timezone
@@ -18,13 +23,14 @@ from rest_framework.views import APIView
 from lojas.autenticacao import LojaAutenticada, TokenLojaAuthentication
 from lojas.models import Camera
 
-from .models import Evento
+from .models import Evento, VendaJanela
 
-LIMITE_POR_LOTE = 500
+LIMITE_POR_LOTE = 500             # eventos por envio
+LIMITE_JANELAS_POR_LOTE = 1000    # janelas de vendas por envio (7 dias = 672)
 
 
 # ----------------------------------------------------------------------
-# Validacao (serializers): o "porteiro" do JSON que chega
+# Campo comum: data/hora que EXIGE fuso
 # ----------------------------------------------------------------------
 
 class InstanteComFusoField(serializers.DateTimeField):
@@ -40,6 +46,10 @@ class InstanteComFusoField(serializers.DateTimeField):
         return super().to_internal_value(valor)
 
 
+# ----------------------------------------------------------------------
+# EVENTOS
+# ----------------------------------------------------------------------
+
 class EventoEntradaSerializer(serializers.Serializer):
     """Formato de UM evento no JSON."""
 
@@ -54,10 +64,6 @@ class LoteEventosSerializer(serializers.Serializer):
 
     eventos = EventoEntradaSerializer(many=True, allow_empty=False, max_length=LIMITE_POR_LOTE)
 
-
-# ----------------------------------------------------------------------
-# O endpoint
-# ----------------------------------------------------------------------
 
 class EventosView(APIView):
     authentication_classes = [TokenLojaAuthentication]
@@ -120,3 +126,68 @@ class EventosView(APIView):
         for codigo in codigos - cameras.keys():
             cameras[codigo], _ = Camera.objects.get_or_create(loja=loja, codigo=codigo, defaults={"nome": codigo})
         return cameras
+
+
+# ----------------------------------------------------------------------
+# VENDAS
+# ----------------------------------------------------------------------
+
+class JanelaVendaSerializer(serializers.Serializer):
+    """Formato de UMA janela de vendas no JSON."""
+
+    inicio = InstanteComFusoField()
+    transacoes = serializers.IntegerField(min_value=0)
+    # Texto com ate 2 casas decimais ("845.30"), nunca negativo.
+    faturamento = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0)
+
+    def validate_inicio(self, valor):
+        """A janela precisa comecar num multiplo de 15 minutos (14:00, 14:15...)."""
+        em_utc = valor.astimezone(fuso_utc.utc)
+        if em_utc.minute % 15 or em_utc.second or em_utc.microsecond:
+            raise serializers.ValidationError(
+                "A janela deve comecar num multiplo de 15 min. Ex.: 14:00, 14:15, 14:30, 14:45."
+            )
+        return em_utc
+
+
+class LoteVendasSerializer(serializers.Serializer):
+    """Formato do corpo inteiro: {"janelas": [ ... ]}, de 1 a 1.000 janelas."""
+
+    janelas = JanelaVendaSerializer(many=True, allow_empty=False, max_length=LIMITE_JANELAS_POR_LOTE)
+
+
+class VendasView(APIView):
+    authentication_classes = [TokenLojaAuthentication]
+    permission_classes = [LojaAutenticada]
+
+    def post(self, request):
+        lote = LoteVendasSerializer(data=request.data)
+        lote.is_valid(raise_exception=True)
+
+        token = request.auth
+        loja = token.loja  # a loja vem do TOKEN, nunca do JSON
+
+        # Se a mesma janela vier repetida no lote, vale a ULTIMA.
+        por_inicio = {janela["inicio"]: janela for janela in lote.validated_data["janelas"]}
+        registros = [
+            VendaJanela(
+                loja=loja,
+                janela_inicio=inicio,
+                transacoes=janela["transacoes"],
+                faturamento=janela["faturamento"],
+            )
+            for inicio, janela in por_inicio.items()
+        ]
+
+        with transaction.atomic():
+            # "Upsert": insere as janelas novas e SUBSTITUI os valores das que
+            # ja existem (ex.: venda cancelada depois do primeiro envio).
+            VendaJanela.objects.bulk_create(
+                registros,
+                update_conflicts=True,
+                unique_fields=["loja", "janela_inicio"],
+                update_fields=["transacoes", "faturamento", "atualizado_em"],
+            )
+
+        token.marcar_uso()
+        return Response({"atualizadas": len(registros)})

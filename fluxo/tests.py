@@ -166,3 +166,88 @@ class ApiEventosTest(TestCase):
         resposta = self.enviar(self.token_a, [evento(camera="cam2")])
         self.assertEqual(resposta.status_code, 200)
         self.assertTrue(Camera.objects.filter(loja=self.loja_a, codigo="cam2").exists())
+
+# ======================================================================
+# Testes da API de vendas (POST /api/v1/vendas/)
+# ======================================================================
+from decimal import Decimal
+
+from .models import VendaJanela
+
+URL_VENDAS = "/api/v1/vendas/"
+
+
+def janela(inicio="2026-10-14T14:00:00Z", transacoes=12, faturamento="845.30"):
+    """Monta UMA janela de vendas no formato do contrato."""
+    return {"inicio": inicio, "transacoes": transacoes, "faturamento": faturamento}
+
+
+class ApiVendasTest(TestCase):
+
+    def setUp(self):
+        self.cliente = APIClient()
+        empresa_a = Empresa.objects.create(nome="Rede A", slug="rede-a")
+        self.loja_a = Loja.objects.create(empresa=empresa_a, nome="Loja A", slug="loja-a")
+        _, self.token_a = TokenApi.gerar(self.loja_a)
+
+        empresa_b = Empresa.objects.create(nome="Rede B", slug="rede-b")
+        self.loja_b = Loja.objects.create(empresa=empresa_b, nome="Loja B", slug="loja-b")
+        _, self.token_b = TokenApi.gerar(self.loja_b)
+
+    def enviar(self, token, janelas):
+        return self.cliente.post(
+            URL_VENDAS, {"janelas": janelas}, format="json", HTTP_AUTHORIZATION=f"Bearer {token}"
+        )
+
+    def test_sem_token_recebe_401(self):
+        resposta = self.cliente.post(URL_VENDAS, {"janelas": [janela()]}, format="json")
+        self.assertEqual(resposta.status_code, 401)
+        self.assertEqual(VendaJanela.objects.count(), 0)
+
+    def test_envio_valido_grava_as_janelas(self):
+        resposta = self.enviar(self.token_a, [janela(), janela(inicio="2026-10-14T14:15:00Z")])
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.json(), {"atualizadas": 2})
+        self.assertEqual(VendaJanela.objects.filter(loja=self.loja_a).count(), 2)
+
+    def test_reenvio_substitui_o_valor_em_vez_de_duplicar(self):
+        # O cancelamento: a mesma janela volta com uma venda a menos.
+        self.enviar(self.token_a, [janela(transacoes=12, faturamento="845.30")])
+        self.enviar(self.token_a, [janela(transacoes=11, faturamento="780.10")])
+        self.assertEqual(VendaJanela.objects.count(), 1)
+        venda = VendaJanela.objects.get()
+        self.assertEqual(venda.transacoes, 11)
+        self.assertEqual(venda.faturamento, Decimal("780.10"))
+
+    def test_janela_repetida_no_mesmo_lote_vale_a_ultima(self):
+        self.enviar(self.token_a, [janela(transacoes=5), janela(transacoes=7)])
+        self.assertEqual(VendaJanela.objects.get().transacoes, 7)
+
+    def test_janela_fora_do_multiplo_de_15_minutos_e_recusada(self):
+        resposta = self.enviar(self.token_a, [janela(inicio="2026-10-14T14:07:00Z")])
+        self.assertEqual(resposta.status_code, 400)
+        self.assertEqual(VendaJanela.objects.count(), 0)
+
+    def test_horario_com_fuso_local_alinhado_e_aceito(self):
+        # 10:15 em Campo Grande (-04:00) = 14:15 UTC: e um inicio de janela valido.
+        resposta = self.enviar(self.token_a, [janela(inicio="2026-10-14T10:15:00-04:00")])
+        self.assertEqual(resposta.status_code, 200)
+
+    def test_inicio_sem_fuso_e_recusado(self):
+        resposta = self.enviar(self.token_a, [janela(inicio="2026-10-14T14:00:00")])
+        self.assertEqual(resposta.status_code, 400)
+
+    def test_faturamento_negativo_e_recusado(self):
+        resposta = self.enviar(self.token_a, [janela(faturamento="-10.00")])
+        self.assertEqual(resposta.status_code, 400)
+
+    def test_faturamento_com_mais_de_2_casas_e_recusado(self):
+        resposta = self.enviar(self.token_a, [janela(faturamento="10.555")])
+        self.assertEqual(resposta.status_code, 400)
+
+    def test_vendas_da_loja_b_nao_alteram_a_loja_a(self):
+        # Mesma janela, lojas diferentes: cada uma tem a sua linha.
+        self.enviar(self.token_a, [janela(transacoes=12)])
+        self.enviar(self.token_b, [janela(transacoes=3)])
+        self.assertEqual(VendaJanela.objects.get(loja=self.loja_a).transacoes, 12)
+        self.assertEqual(VendaJanela.objects.get(loja=self.loja_b).transacoes, 3)
