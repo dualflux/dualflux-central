@@ -8,11 +8,13 @@
   .periodos a { display: inline-block; margin: 0 6px 6px 0; padding: 6px 12px; border-radius: 6px;
                 background: #fff; color: #12355b; text-decoration: none; border: 1px solid #cbd2d9; }
   .periodos a.ativo { background: #12355b; color: #fff; border-color: #12355b; }
-  .numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .numeros, .roscas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
   .numeros span { display: block; color: #616e7c; font-size: .9rem; }
   .numeros strong { font-size: 1.8rem; }
   .cartao { margin-bottom: 16px; }
   .cartao h2 { margin-top: 0; font-size: 1.1rem; }
+  /* Area de altura fixa: deixa os dois graficos lado a lado do mesmo tamanho. */
+  .area-grafico { position: relative; height: 300px; }
   table { width: 100%; border-collapse: collapse; font-size: .95rem; }
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e4e7eb; vertical-align: middle; }
   /* Quadro de destaque da media do periodo, no cabecalho de cada coluna. */
@@ -26,6 +28,10 @@
   .etiqueta.forte { background: #def7ec; color: #03543f; }
   .legenda { margin-top: 10px; font-size: .9rem; color: #3e4c59; }
   .legenda div { margin: 4px 0; }
+  .cores { font-size: .85rem; color: #3e4c59; margin-top: 8px; }
+  .bolinha { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; }
+  /* No celular, os dois graficos ficam um embaixo do outro. */
+  @media (max-width: 600px) { .roscas { grid-template-columns: 1fr; } }
 </style>
 
 <p class="sub trilha"><a href="{% url 'empresa_inicio' empresa.slug %}">{{ empresa.nome }}</a> &rsaquo; {{ loja.nome }}</p>
@@ -54,6 +60,24 @@
   <p class="nota">Media de entradas em cada hora do dia, no periodo.</p>
   <canvas id="grafico-horas"></canvas>
 </div>
+
+<div class="roscas">
+  <div class="cartao">
+    <h2>Entradas por turno</h2>
+    <p class="nota">Manha ate 12h, tarde de 12h a 18h, noite depois das 18h.</p>
+    <div class="area-grafico"><canvas id="grafico-turnos"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h2>Entradas por dia da semana</h2>
+    <p class="nota">Total de entradas de cada dia e o peso dele no periodo.</p>
+    <div class="area-grafico"><canvas id="grafico-semana"></canvas></div>
+  </div>
+</div>
+<p class="cores">
+  Cores dos turnos:<span class="bolinha" style="background:#4e79a7"></span>maior movimento
+  <span class="bolinha" style="background:#f28e2b"></span>intermediario
+  <span class="bolinha" style="background:#e15759"></span>menor movimento
+</p>
 
 <div class="cartao">
   <h2>Abertura e fechamento, dia a dia</h2>
@@ -98,26 +122,108 @@
 {# json_script: entrega os numeros ao JavaScript de forma segura. #}
 {{ grafico_dias|json_script:"dados-dias" }}
 {{ grafico_horas|json_script:"dados-horas" }}
+{{ grafico_turnos|json_script:"dados-turnos" }}
+{{ grafico_semana|json_script:"dados-semana" }}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{# Complemento oficial que escreve os valores DENTRO dos graficos. #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
   // Le os dados que o Django colocou na pagina.
-  const dias = JSON.parse(document.getElementById("dados-dias").textContent);
-  const horas = JSON.parse(document.getElementById("dados-horas").textContent);
+  const ler = (id) => JSON.parse(document.getElementById(id).textContent);
+  const dias = ler("dados-dias");
+  const horas = ler("dados-horas");
+  const turnos = ler("dados-turnos");
+  const semana = ler("dados-semana");
 
-  // Opcoes comuns: sem legenda (so ha uma serie) e eixo Y comecando no zero.
-  const opcoes = { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } };
+  // Numero no padrao brasileiro (2.134) e percentual do total.
+  const br = (numero) => numero.toLocaleString("pt-BR");
+  const percentual = (valor, lista) => {
+    const total = lista.reduce((soma, item) => soma + item, 0);
+    return total ? Math.round(valor / total * 100) : 0;
+  };
+
+  // Cor pela POSICAO do valor: maior = azul, menor = vermelho, demais = laranja.
+  // As cores se recalculam sozinhas quando o periodo muda.
+  const AZUL = "#4e79a7", LARANJA = "#f28e2b", VERMELHO = "#e15759";
+  const coresPorPosicao = (valores) => {
+    const maior = Math.max(...valores);
+    const menor = Math.min(...valores);
+    return valores.map((valor) => (valor === maior ? AZUL : valor === menor ? VERMELHO : LARANJA));
+  };
+
+  // --- Barras simples (sem valores escritos: sao muitas barras) ---
+  const opcoesBarras = {
+    plugins: { legend: { display: false }, datalabels: { display: false } },
+    scales: { y: { beginAtZero: true } },
+  };
 
   new Chart(document.getElementById("grafico-dias"), {
     type: "bar",
-    data: { labels: dias.rotulos, datasets: [{ label: "Entradas", data: dias.valores, backgroundColor: "#2a5d8f" }] },
-    options: opcoes,
+    data: { labels: dias.rotulos, datasets: [{ data: dias.valores, backgroundColor: "#2a5d8f" }] },
+    options: opcoesBarras,
   });
 
   new Chart(document.getElementById("grafico-horas"), {
     type: "bar",
-    data: { labels: horas.rotulos, datasets: [{ label: "Media de entradas", data: horas.valores, backgroundColor: "#12355b" }] },
-    options: opcoes,
+    data: { labels: horas.rotulos, datasets: [{ data: horas.valores, backgroundColor: "#12355b" }] },
+    options: opcoesBarras,
+  });
+
+  // --- Rosca dos turnos: percentual escrito dentro de cada fatia ---
+  new Chart(document.getElementById("grafico-turnos"), {
+    type: "doughnut",
+    plugins: [ChartDataLabels],
+    data: {
+      labels: turnos.rotulos,
+      datasets: [{ data: turnos.valores, backgroundColor: coresPorPosicao(turnos.valores) }],
+    },
+    options: {
+      maintainAspectRatio: false,  // ocupa a altura fixa da .area-grafico
+      plugins: {
+        legend: { position: "bottom" },
+        datalabels: {
+          color: "#fff",
+          font: { weight: "bold", size: 14 },
+          formatter: (valor) => percentual(valor, turnos.valores) + "%",
+        },
+        tooltip: { callbacks: { label: (c) => `${c.label}: ${br(c.parsed)} entradas` } },
+      },
+    },
+  });
+
+  // --- Dias da semana: barras deitadas com "2.134 · 18%" na ponta ---
+   // --- Dias da semana: barras deitadas, cada dia com sua cor ---
+  // O texto "2.134 · 18%" fica DENTRO da barra, na ponta: assim a barra
+  // pode ocupar a largura toda, sem reservar espaco a direita.
+  new Chart(document.getElementById("grafico-semana"), {
+    type: "bar",
+    plugins: [ChartDataLabels],
+    data: {
+      labels: semana.rotulos,
+      datasets: [{
+        data: semana.valores,
+        backgroundColor: ["#4e79a7", "#f28e2b", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7"],
+        barPercentage: 0.85,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,  // ocupa a altura fixa da .area-grafico
+      indexAxis: "y",  // barras deitadas: o nome do dia fica a esquerda
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: "end",   // preso na ponta da barra...
+          align: "start",  // ...e escrito para DENTRO dela
+          color: "#fff",
+          font: { weight: "bold" },
+          formatter: (valor) => `${br(valor)} · ${percentual(valor, semana.valores)}%`,
+        },
+        tooltip: { enabled: false },
+      },
+      // A escala termina exatamente no maior valor: a maior barra vai ate a borda.
+      scales: { x: { beginAtZero: true, display: false, max: Math.max(...semana.valores) } },
+    },
   });
 </script>
 {% endblock %}

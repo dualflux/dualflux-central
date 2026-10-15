@@ -16,7 +16,13 @@ from django.shortcuts import get_object_or_404, render
 from contas.models import Empresa, Usuario
 from lojas.models import Loja
 
-from .consultas import entradas_por_dia, media_por_hora_do_dia, pontas_por_dia
+from .consultas import (
+    entradas_por_dia,
+    entradas_por_dia_da_semana,
+    entradas_por_turno,
+    media_por_hora_do_dia,
+    pontas_por_dia,
+)
 
 # Opcoes de periodo (em dias) mostradas como botoes na tela.
 PERIODOS = [7, 30, 42, 60, 90]
@@ -55,6 +61,11 @@ def classificar(indice):
     if indice <= 120:
         return "normal", "normal"
     return "acima do normal", "forte"
+
+
+def para_grafico(pares):
+    """Transforma [(rotulo, valor), ...] no formato que o Chart.js espera."""
+    return {"rotulos": [rotulo for rotulo, _ in pares], "valores": [valor for _, valor in pares]}
 
 
 @login_required
@@ -98,13 +109,9 @@ def loja_painel(request, empresa_slug, loja_slug):
         "media_diaria": round(total / dias),
         "pontas": pontas,
         # Dados dos graficos: vao para o template como JSON (ver json_script).
-        "grafico_dias": {
-            "rotulos": [dia.strftime("%d/%m") for dia, _ in por_dia],
-            "valores": [entradas for _, entradas in por_dia],
-        },
-        "grafico_horas": {
-            "rotulos": [f"{hora}h" for hora, _ in por_hora],
-            "valores": [media for _, media in por_hora],
-        },
+        "grafico_dias": para_grafico([(dia.strftime("%d/%m"), entradas) for dia, entradas in por_dia]),
+        "grafico_horas": para_grafico([(f"{hora}h", media) for hora, media in por_hora]),
+        "grafico_turnos": para_grafico(entradas_por_turno(loja, data_inicial, data_final)),
+        "grafico_semana": para_grafico(entradas_por_dia_da_semana(loja, data_inicial, data_final)),
     }
     return render(request, "fluxo/loja_painel.html", contexto)

@@ -186,3 +186,28 @@ def pontas_por_dia(loja, data_inicial, data_final):
         "media_fechamento": round(media_fechamento, 1),
         "dias": linhas,
     }
+
+# Turnos usados na rosca "entradas por turno": (nome, hora inicial, hora final).
+# A hora final NAO entra no turno: "Tarde" vai das 12:00 ate 17:59.
+TURNOS = [("Manha", 0, 12), ("Tarde", 12, 18), ("Noite", 18, 24)]
+
+
+def entradas_por_turno(loja, data_inicial, data_final):
+    """Lista [(turno, entradas)] no periodo: quanto do movimento cai em cada turno."""
+    contagem = _entradas_por_dia_e_hora(loja, data_inicial, data_final)
+    totais = {nome: 0 for nome, _inicio, _fim in TURNOS}
+    for (_dia, hora), total in contagem.items():
+        for nome, inicio, fim in TURNOS:
+            if inicio <= hora < fim:
+                totais[nome] += total
+                break
+    return list(totais.items())
+
+
+def entradas_por_dia_da_semana(loja, data_inicial, data_final):
+    """Lista [(dia da semana, entradas)] no periodo: o peso de cada dia no total."""
+    contagem = _entradas_por_dia_e_hora(loja, data_inicial, data_final)
+    totais = [0] * 7
+    for (dia, _hora), total in contagem.items():
+        totais[dia.weekday()] += total
+    return list(zip(NOMES_DIAS, totais))
