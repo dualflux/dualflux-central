@@ -193,3 +193,91 @@ class HorarioFuncionamento(models.Model):
 
     def __str__(self):
         return f"{self.get_dia_semana_display()}: {self.abre:%H:%M}-{self.fecha:%H:%M}"
+
+# ======================================================================
+# Token de API: a "chave" com que o servidor local da loja se identifica.
+# (Os imports ficam aqui para manter todo o assunto "token" num bloco so.)
+# ======================================================================
+import hashlib
+import hmac
+import secrets
+
+from django.utils import timezone
+
+
+def _hash_token(token_texto):
+    """SHA-256 do token. Rapido de proposito: o token e longo e aleatorio."""
+    return hashlib.sha256(token_texto.encode()).hexdigest()
+
+
+class TokenApi(models.Model):
+    """
+    Credencial de UMA loja para enviar dados ao central.
+
+    - O token completo aparece UMA unica vez, na hora de gerar; depois so o hash fica guardado.
+    - Uma loja pode ter mais de um token: permite trocar o token sem derrubar a loja
+      (gera o novo, atualiza o .env da loja, revoga o antigo).
+    """
+
+    PREFIXO_FIXO = "dfx"  # identifica de cara que e um token DualFlux
+
+    loja = models.ForeignKey(Loja, on_delete=models.CASCADE, related_name="tokens")
+    prefixo = models.CharField("prefixo", max_length=8, unique=True, editable=False)
+    hash = models.CharField("hash", max_length=64, editable=False)
+    descricao = models.CharField("descricao", max_length=100, blank=True,
+                                 help_text='Ex.: "Servidor da loja, instalado em 15/10".')
+    criado_em = models.DateTimeField("criado em", auto_now_add=True)
+    ultimo_uso_em = models.DateTimeField("ultimo uso", null=True, blank=True, editable=False)
+    revogado_em = models.DateTimeField("revogado em", null=True, blank=True,
+                                       help_text="Preenchido = token cancelado; a loja deixa de conseguir enviar.")
+
+    class Meta:
+        verbose_name = "token de API"
+        verbose_name_plural = "tokens de API"
+        ordering = ["-criado_em"]
+
+    @property
+    def ativo(self):
+        return self.revogado_em is None
+
+    @classmethod
+    def gerar(cls, loja, descricao=""):
+        """
+        Cria um token novo para a loja.
+        Devolve (registro, token_texto). O token_texto deve ser copiado AGORA:
+        ele nao fica guardado em lugar nenhum.
+        """
+        prefixo = secrets.token_hex(4)    # 8 caracteres: a parte visivel
+        segredo = secrets.token_hex(32)   # 64 caracteres: a parte secreta
+        token_texto = f"{cls.PREFIXO_FIXO}_{prefixo}_{segredo}"
+        registro = cls.objects.create(
+            loja=loja, prefixo=prefixo, hash=_hash_token(token_texto), descricao=descricao
+        )
+        return registro, token_texto
+
+    @classmethod
+    def verificar(cls, token_texto):
+        """
+        Recebe o token enviado pela loja e devolve o registro, ou None se invalido.
+        Usado pela API em TODA requisicao.
+        """
+        partes = (token_texto or "").split("_")
+        if len(partes) != 3 or partes[0] != cls.PREFIXO_FIXO:
+            return None
+        registro = cls.objects.select_related("loja", "loja__empresa").filter(prefixo=partes[1]).first()
+        if registro is None or not registro.ativo:
+            return None
+        # compare_digest compara em tempo constante: impede descobrir o hash
+        # medindo quanto tempo a comparacao demora (ataque de temporizacao).
+        if not hmac.compare_digest(registro.hash, _hash_token(token_texto)):
+            return None
+        return registro
+
+    def marcar_uso(self):
+        """Registra o ultimo uso (mostra no admin se a loja esta mandando dados)."""
+        self.ultimo_uso_em = timezone.now()
+        self.save(update_fields=["ultimo_uso_em"])
+
+    def __str__(self):
+        situacao = "ativo" if self.ativo else "revogado"
+        return f"{self.PREFIXO_FIXO}_{self.prefixo}_... ({situacao})"
