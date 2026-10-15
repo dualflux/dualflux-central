@@ -13,6 +13,7 @@ from django.urls import path
 
 from contas import views as contas_views
 from fluxo.api import EventosView
+from monitor.api import HeartbeatView
 
 urlpatterns = [
     path("admin/", admin.site.urls),                                  # portao da equipe DualFlux
@@ -20,6 +21,7 @@ urlpatterns = [
     # O "v1" no caminho permite criar uma "v2" no futuro sem quebrar as lojas
     # que ainda estiverem com o software antigo.
     path("api/v1/eventos/", EventosView.as_view(), name="api_eventos"),
+    path("api/v1/heartbeat/", HeartbeatView.as_view(), name="api_heartbeat"),
     # --- Telas dos clientes ---
     path("login/", contas_views.Login.as_view(), name="login"),       # portao dos clientes
     path("logout/", LogoutView.as_view(), name="logout"),             # sair
