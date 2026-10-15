@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block titulo %}{{ loja.nome }} - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  .trilha a { color: #2a5d8f; }
+  .periodos { margin: 12px 0 20px; }
+  .periodos a { display: inline-block; margin: 0 6px 6px 0; padding: 6px 12px; border-radius: 6px;
+                background: #fff; color: #12355b; text-decoration: none; border: 1px solid #cbd2d9; }
+  .periodos a.ativo { background: #12355b; color: #fff; border-color: #12355b; }
+  .numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .numeros span { display: block; color: #616e7c; font-size: .9rem; }
+  .numeros strong { font-size: 1.8rem; }
+  .cartao { margin-bottom: 16px; }
+  .cartao h2 { margin-top: 0; font-size: 1.1rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e4e7eb; vertical-align: middle; }
+  /* Quadro de destaque da media do periodo, no cabecalho de cada coluna. */
+  .media-periodo { margin-top: 6px; padding: 6px 10px; border-radius: 6px; background: #e8eef5;
+                   border-left: 4px solid #12355b; font-weight: normal; color: #3e4c59; font-size: .8rem; }
+  .media-periodo strong { display: block; font-size: 1.4rem; color: #12355b; }
+  .valor { font-size: 1.05rem; font-weight: 600; margin-right: 6px; }
+  .etiqueta { padding: 2px 8px; border-radius: 10px; font-size: .8rem; white-space: nowrap; }
+  .etiqueta.fraca { background: #fde8e8; color: #9b1c1c; }
+  .etiqueta.normal { background: #e4e7eb; color: #3e4c59; }
+  .etiqueta.forte { background: #def7ec; color: #03543f; }
+  .legenda { margin-top: 10px; font-size: .9rem; color: #3e4c59; }
+  .legenda div { margin: 4px 0; }
+</style>
+
+<p class="sub trilha"><a href="{% url 'empresa_inicio' empresa.slug %}">{{ empresa.nome }}</a> &rsaquo; {{ loja.nome }}</p>
+<h1>{{ loja.nome }}</h1>
+<p class="sub">De {{ data_inicial|date:"d/m/Y" }} a {{ data_final|date:"d/m/Y" }}</p>
+
+{# Botoes de periodo: cada um recarrega a pagina com ?dias=N #}
+<nav class="periodos">
+  {% for periodo in periodos %}
+    <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
+  {% endfor %}
+</nav>
+
+<div class="numeros">
+  <div class="cartao"><span>Entradas no periodo</span><strong>{{ total_entradas }}</strong></div>
+  <div class="cartao"><span>Media por dia</span><strong>{{ media_diaria }}</strong></div>
+</div>
+
+<div class="cartao">
+  <h2>Entradas por dia</h2>
+  <canvas id="grafico-dias"></canvas>
+</div>
+
+<div class="cartao">
+  <h2>Quando a loja enche</h2>
+  <p class="nota">Media de entradas em cada hora do dia, no periodo.</p>
+  <canvas id="grafico-horas"></canvas>
+</div>
+
+<div class="cartao">
+  <h2>Abertura e fechamento, dia a dia</h2>
+
+  <table>
+    <tr>
+      <th>Data</th>
+      <th>Horario</th>
+      {# A regua do periodo, em destaque, uma vez so no cabecalho de cada coluna. #}
+      <th>Abertura
+        <div class="media-periodo">media do periodo<strong>{{ pontas.media_abertura }}</strong></div>
+      </th>
+      <th>Fechamento
+        <div class="media-periodo">media do periodo<strong>{{ pontas.media_fechamento }}</strong></div>
+      </th>
+    </tr>
+    {% for linha in pontas.dias %}
+      <tr>
+        <td>{{ linha.data|date:"d/m" }} <small>{{ linha.dia_semana }}</small></td>
+        <td>{{ linha.horario }}</td>
+        <td>
+          <span class="valor">{{ linha.abertura }}</span>
+          <span class="etiqueta {{ linha.css_abertura }}">{{ linha.leitura_abertura|capfirst }}</span>
+        </td>
+        <td>
+          <span class="valor">{{ linha.fechamento }}</span>
+          <span class="etiqueta {{ linha.css_fechamento }}">{{ linha.leitura_fechamento|capfirst }}</span>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">Sem dados no periodo ou loja sem horario de funcionamento cadastrado.</td></tr>
+    {% endfor %}
+  </table>
+
+  <div class="legenda">
+    <div>Abaixo de 80% da media do periodo: <span class="etiqueta fraca">Abaixo do normal</span></div>
+    <div>De 80% a 120% da media do periodo: <span class="etiqueta normal">Normal</span></div>
+    <div>Acima de 120% da media do periodo: <span class="etiqueta forte">Acima do normal</span></div>
+  </div>
+</div>
+
+{# json_script: entrega os numeros ao JavaScript de forma segura. #}
+{{ grafico_dias|json_script:"dados-dias" }}
+{{ grafico_horas|json_script:"dados-horas" }}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  // Le os dados que o Django colocou na pagina.
+  const dias = JSON.parse(document.getElementById("dados-dias").textContent);
+  const horas = JSON.parse(document.getElementById("dados-horas").textContent);
+
+  // Opcoes comuns: sem legenda (so ha uma serie) e eixo Y comecando no zero.
+  const opcoes = { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } };
+
+  new Chart(document.getElementById("grafico-dias"), {
+    type: "bar",
+    data: { labels: dias.rotulos, datasets: [{ label: "Entradas", data: dias.valores, backgroundColor: "#2a5d8f" }] },
+    options: opcoes,
+  });
+
+  new Chart(document.getElementById("grafico-horas"), {
+    type: "bar",
+    data: { labels: horas.rotulos, datasets: [{ label: "Media de entradas", data: horas.valores, backgroundColor: "#12355b" }] },
+    options: opcoes,
+  });
+</script>
+{% endblock %}

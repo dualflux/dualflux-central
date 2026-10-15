@@ -12,7 +12,7 @@
   <ul class="lojas">
     {% for loja in lojas %}
       <li>
-        <strong>{{ loja.nome }}</strong>
+        <strong><a href="{% url 'loja_painel' empresa.slug loja.slug %}">{{ loja.nome }}</a></strong>
         <span>{{ loja.cidade }}{% if loja.uf %}/{{ loja.uf }}{% endif %}</span>
       </li>
     {% endfor %}

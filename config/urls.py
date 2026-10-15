@@ -14,6 +14,7 @@ from django.urls import path
 from contas import views as contas_views
 from fluxo.api import EventosView
 from monitor.api import HeartbeatView
+from fluxo.views import loja_painel
 
 urlpatterns = [
     path("admin/", admin.site.urls),                                  # portao da equipe DualFlux
@@ -27,4 +28,5 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),             # sair
     path("", contas_views.inicio, name="inicio"),                     # decide para onde ir
     path("<slug:empresa_slug>/", contas_views.empresa_inicio, name="empresa_inicio"),
-]
+    path("<slug:empresa_slug>/<slug:loja_slug>/", loja_painel, name="loja_painel"),
+    ]

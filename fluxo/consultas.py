@@ -137,3 +137,52 @@ def pontas_do_dia(loja, data_inicial, data_final):
             "indice_ultima": round(ultima / media_hora * 100) if media_hora else 0,
         })
     return resultado
+
+def pontas_por_dia(loja, data_inicial, data_final):
+    """
+    Pontas do dia avaliadas DIA A DIA contra a media do PERIODO.
+
+    1) Media de abertura do periodo = media das entradas na PRIMEIRA hora
+       de funcionamento, considerando todos os dias com movimento.
+    2) Media de fechamento do periodo = o mesmo, na ULTIMA hora.
+    3) Cada dia: a abertura dele comparada com a media de abertura,
+       e o fechamento dele comparado com a media de fechamento.
+
+    indice = valor do dia / media do periodo * 100  (100 = igual a media)
+    """
+    horarios = {h.dia_semana: (h.abre, h.fecha) for h in loja.horarios.all()}
+    contagem = _entradas_por_dia_e_hora(loja, data_inicial, data_final)
+
+    # 1) Abertura e fechamento de cada dia com movimento.
+    linhas = []
+    for dia in sorted({dia for (dia, _hora) in contagem}):
+        semana = dia.weekday()
+        if semana not in horarios:
+            continue  # dia em que a loja nao abre
+        abre, fecha = horarios[semana]
+        ultima_hora = (fecha.hour - 1) if fecha.minute == 0 else fecha.hour
+        linhas.append({
+            "data": dia,
+            "dia_semana": NOMES_DIAS[semana],
+            "horario": f"{abre:%H:%M}-{fecha:%H:%M}",
+            "abertura": contagem.get((dia, abre.hour), 0),
+            "fechamento": contagem.get((dia, ultima_hora), 0),
+        })
+
+    if not linhas:
+        return {"media_abertura": 0, "media_fechamento": 0, "dias": []}
+
+    # 2) As duas reguas do periodo.
+    media_abertura = sum(linha["abertura"] for linha in linhas) / len(linhas)
+    media_fechamento = sum(linha["fechamento"] for linha in linhas) / len(linhas)
+
+    # 3) Cada dia comparado com a regua correspondente.
+    for linha in linhas:
+        linha["indice_abertura"] = round(linha["abertura"] / media_abertura * 100) if media_abertura else 0
+        linha["indice_fechamento"] = round(linha["fechamento"] / media_fechamento * 100) if media_fechamento else 0
+
+    return {
+        "media_abertura": round(media_abertura, 1),
+        "media_fechamento": round(media_fechamento, 1),
+        "dias": linhas,
+    }
