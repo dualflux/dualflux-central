@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     # Nossos apps:
     "contas",  # Empresa e Usuario
     "lojas",   # Regiao, Loja, Camera e Horario de funcionamento
+    "fluxo",   # Eventos de entrada/saida, janelas de 15 min e vendas
     "rest_framework",  # Django REST Framework: a API que recebe os dados das lojas
 ]
 
