@@ -18,8 +18,9 @@ from lojas.models import Loja
 
 from .consultas import (
     entradas_por_dia,
-    entradas_por_dia_da_semana,
-    entradas_por_turno,
+    indicadores_do_periodo,
+    indicadores_por_dia_da_semana,
+    indicadores_por_turno,
     media_por_hora_do_dia,
     pontas_por_dia,
 )
@@ -63,6 +64,22 @@ def classificar(indice):
     return "acima do normal", "forte"
 
 
+def marcar_extremos(grupos):
+    """
+    Em [(grupo, indicadores)], marca a MAIOR e a MENOR conversao do trio:
+    indicadores["destaque"] = "maior", "menor" ou "".
+    """
+    conversoes = [ind["conversao"] for _, ind in grupos if ind["conversao"] is not None]
+    for _, ind in grupos:
+        ind["destaque"] = ""
+        if conversoes and ind["conversao"] is not None:
+            if ind["conversao"] == max(conversoes):
+                ind["destaque"] = "maior"
+            elif ind["conversao"] == min(conversoes):
+                ind["destaque"] = "menor"
+    return grupos
+
+
 def para_grafico(pares):
     """Transforma [(rotulo, valor), ...] no formato que o Chart.js espera."""
     return {"rotulos": [rotulo for rotulo, _ in pares], "valores": [valor for _, valor in pares]}
@@ -86,6 +103,12 @@ def loja_painel(request, empresa_slug, loja_slug):
     data_final = hoje - timedelta(days=1)
     data_inicial = data_final - timedelta(days=dias - 1)
 
+    # --- Resumo e trios: o pacote de indicadores (entradas + vendas juntas) ---
+    resumo = indicadores_do_periodo(loja, data_inicial, data_final)
+    turnos = marcar_extremos(indicadores_por_turno(loja, data_inicial, data_final))
+    semana = marcar_extremos(indicadores_por_dia_da_semana(loja, data_inicial, data_final))
+
+    # --- Fluxo ---
     por_dia = entradas_por_dia(loja, data_inicial, data_final)
     por_hora = [(hora, media) for hora, media in media_por_hora_do_dia(loja, data_inicial, data_final) if media > 0]
 
@@ -93,10 +116,7 @@ def loja_painel(request, empresa_slug, loja_slug):
     for linha in pontas["dias"]:
         linha["leitura_abertura"], linha["css_abertura"] = classificar(linha["indice_abertura"])
         linha["leitura_fechamento"], linha["css_fechamento"] = classificar(linha["indice_fechamento"])
-    # Na tabela, o dia mais recente aparece primeiro.
-    pontas["dias"].reverse()
-
-    total = sum(entradas for _dia, entradas in por_dia)
+    pontas["dias"].reverse()  # na tabela, o dia mais recente aparece primeiro
 
     contexto = {
         "empresa": loja.empresa,
@@ -105,13 +125,17 @@ def loja_painel(request, empresa_slug, loja_slug):
         "periodos": PERIODOS,
         "data_inicial": data_inicial,
         "data_final": data_final,
-        "total_entradas": total,
-        "media_diaria": round(total / dias),
+        "resumo": resumo,
+        "media_diaria": round(resumo["entradas"] / dias),
+        "turnos": turnos,
+        "semana": semana,
         "pontas": pontas,
         # Dados dos graficos: vao para o template como JSON (ver json_script).
         "grafico_dias": para_grafico([(dia.strftime("%d/%m"), entradas) for dia, entradas in por_dia]),
         "grafico_horas": para_grafico([(f"{hora}h", media) for hora, media in por_hora]),
-        "grafico_turnos": para_grafico(entradas_por_turno(loja, data_inicial, data_final)),
-        "grafico_semana": para_grafico(entradas_por_dia_da_semana(loja, data_inicial, data_final)),
+        "grafico_turnos_entradas": para_grafico([(g, ind["entradas"]) for g, ind in turnos]),
+        "grafico_turnos_vendas": para_grafico([(g, ind["vendas"]) for g, ind in turnos]),
+        "grafico_semana_entradas": para_grafico([(g, ind["entradas"]) for g, ind in semana]),
+        "grafico_semana_vendas": para_grafico([(g, ind["vendas"]) for g, ind in semana]),
     }
     return render(request, "fluxo/loja_painel.html", contexto)

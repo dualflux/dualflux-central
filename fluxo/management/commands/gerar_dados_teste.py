@@ -1,28 +1,35 @@
 """
-Comando: gera dados de TESTE de fluxo para uma loja.
+Comando: gera dados de TESTE de fluxo E de vendas para uma loja.
 
 Uso (dentro do container):
     python manage.py gerar_dados_teste --loja loja-centro --dias 42 --limpar
 
-Cria eventos falsos, mas com o "formato" de uma farmacia real:
+Entradas: falsas, mas com o "formato" de uma farmacia real:
 - picos de manha (8-10h), almoco (12-13h) e fim de tarde (17-19h);
 - sabado um pouco menor, domingo bem menor;
 - variacao aleatoria de um dia para o outro;
 - so dentro do horario de funcionamento da loja.
+
+Vendas: criadas A PARTIR das entradas, janela por janela de 15 minutos,
+com conversao diferente por turno (de proposito, para o dashboard
+contar uma historia):
+- manha ~31%, tarde ~24% (pico com balcao sobrecarregado), noite ~34%.
 
 PROTECAO: so roda com DEBUG=True (nunca em producao).
 """
 
 import random
 import uuid
+from collections import Counter
 from datetime import datetime, time, timedelta
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from fluxo.models import Evento
+from fluxo.models import Evento, VendaJanela
 from lojas.models import Camera, HorarioFuncionamento, Loja
 
 # Horario tipico de farmacia, usado nos dias que a loja ainda nao tiver cadastrado.
@@ -43,14 +50,30 @@ MEDIA_POR_HORA = {
 # Peso de cada dia da semana (sexta um pouco mais forte, domingo bem mais fraco).
 PESO_DO_DIA = {0: 1.05, 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.1, 5: 0.85, 6: 0.55}
 
+# Conversao de teste por turno (mesmos cortes da tela: manha <12h, tarde 12-18h, noite >=18h).
+CONVERSAO_POR_TURNO = [(12, 0.31), (18, 0.24), (24, 0.34)]  # (hora final do turno, conversao)
+
+# Valor medio de UMA venda (ticket) e sua variacao, em reais.
+TICKET_MEDIO = 62.0
+TICKET_VARIACAO = 18.0
+
+
+def conversao_da_hora(hora):
+    """Conversao de teste conforme o turno da hora."""
+    for hora_final, conversao in CONVERSAO_POR_TURNO:
+        if hora < hora_final:
+            return conversao
+    return CONVERSAO_POR_TURNO[-1][1]
+
 
 class Command(BaseCommand):
-    help = "Gera eventos de fluxo FALSOS (mas realistas) para testar o dashboard."
+    help = "Gera entradas e vendas FALSAS (mas realistas) para testar o dashboard."
 
     def add_arguments(self, parser):
         parser.add_argument("--loja", required=True, help="Endereco (slug) da loja. Ex.: loja-centro")
         parser.add_argument("--dias", type=int, default=42, help="Quantos dias para tras (padrao 42 = 6 semanas)")
-        parser.add_argument("--limpar", action="store_true", help="Apaga TODOS os eventos da loja antes de gerar")
+        parser.add_argument("--limpar", action="store_true",
+                            help="Apaga TODOS os eventos e vendas da loja antes de gerar")
         parser.add_argument("--semente", type=int, default=42,
                             help="Semente do sorteio: a mesma semente gera sempre os mesmos dados")
 
@@ -71,10 +94,14 @@ class Command(BaseCommand):
 
         if opcoes["limpar"]:
             apagados, _ = Evento.objects.filter(loja=loja).delete()
-            self.stdout.write(f"Apagados {apagados} eventos antigos da loja.")
+            vendas_apagadas, _ = VendaJanela.objects.filter(loja=loja).delete()
+            self.stdout.write(f"Apagados {apagados} eventos e {vendas_apagadas} janelas de vendas antigas da loja.")
 
         hoje = timezone.localdate()
         eventos = []
+        # Conta as entradas de cada janela de 15 min (hora local): base das vendas.
+        entradas_por_janela = Counter()
+
         for dias_atras in range(opcoes["dias"], 0, -1):
             dia = hoje - timedelta(days=dias_atras)
             if dia.weekday() not in horarios:
@@ -99,13 +126,43 @@ class Command(BaseCommand):
                     saida = entrada + timedelta(minutes=random.uniform(2, 15))  # tempo dentro da loja
                     eventos.append(self._evento(loja, camera, "entrada", entrada, fuso))
                     eventos.append(self._evento(loja, camera, "saida", saida, fuso))
+                    # Janela de 15 min desta entrada (ex.: 10:37 -> 10:30).
+                    janela = entrada.replace(minute=entrada.minute // 15 * 15, second=0, microsecond=0)
+                    entradas_por_janela[janela] += 1
 
         # Grava em blocos de 5.000: bem mais rapido que um por um.
         Evento.objects.bulk_create(eventos, batch_size=5000)
+
+        vendas = self._vendas_das_janelas(loja, entradas_por_janela, fuso)
+        VendaJanela.objects.bulk_create(vendas, batch_size=5000)
+
         entradas = len(eventos) // 2
+        total_vendas = sum(venda.transacoes for venda in vendas)
+        faturamento = sum(venda.faturamento for venda in vendas)
+        conversao = total_vendas / entradas * 100 if entradas else 0
         self.stdout.write(self.style.SUCCESS(
-            f"Gerados {len(eventos)} eventos ({entradas} entradas) em {opcoes['dias']} dias para {loja}."
+            f"Gerados {entradas} entradas e {total_vendas} vendas (conversao {conversao:.1f}%, "
+            f"faturamento R$ {faturamento:,.2f}) em {opcoes['dias']} dias para {loja}."
         ))
+
+    @staticmethod
+    def _vendas_das_janelas(loja, entradas_por_janela, fuso):
+        """
+        Para cada janela de 15 min: cada entrada "decide" se compra,
+        com a probabilidade do turno; cada compra recebe um valor sorteado.
+        """
+        vendas = []
+        for janela, entradas in entradas_por_janela.items():
+            conversao = conversao_da_hora(janela.hour)
+            transacoes = sum(1 for _ in range(entradas) if random.random() < conversao)
+            valor = sum(max(5.0, random.gauss(TICKET_MEDIO, TICKET_VARIACAO)) for _ in range(transacoes))
+            vendas.append(VendaJanela(
+                loja=loja,
+                janela_inicio=janela.replace(tzinfo=fuso),
+                transacoes=transacoes,
+                faturamento=Decimal(f"{valor:.2f}"),
+            ))
+        return vendas
 
     @staticmethod
     def _evento(loja, camera, direcao, horario_local, fuso):

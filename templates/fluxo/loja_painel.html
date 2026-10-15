@@ -3,21 +3,45 @@
 
 {% block conteudo %}
 <style>
+  /* Esta tela usa mais largura que as outras: os trios precisam de espaço. */
+  main { max-width: 1100px; }
   .trilha a { color: #2a5d8f; }
   .periodos { margin: 12px 0 20px; }
   .periodos a { display: inline-block; margin: 0 6px 6px 0; padding: 6px 12px; border-radius: 6px;
                 background: #fff; color: #12355b; text-decoration: none; border: 1px solid #cbd2d9; }
   .periodos a.ativo { background: #12355b; color: #fff; border-color: #12355b; }
-  .numeros, .roscas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-  .numeros span { display: block; color: #616e7c; font-size: .9rem; }
-  .numeros strong { font-size: 1.8rem; }
   .cartao { margin-bottom: 16px; }
   .cartao h2 { margin-top: 0; font-size: 1.1rem; }
-  /* Area de altura fixa: deixa os dois graficos lado a lado do mesmo tamanho. */
+  h2.secao { font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; color: #616e7c; margin: 28px 0 10px; }
+
+  /* Resumo do período */
+  .resumo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .resumo .cartao { margin: 0; padding: 16px; }
+  .resumo span { display: block; color: #616e7c; font-size: .85rem; }
+  .resumo strong { font-size: 1.6rem; }
+  .resumo .principal { background: #12355b; }
+  .resumo .principal span, .resumo .principal strong { color: #fff; }
+
+  /* Trios: gráfico | conversão | gráfico */
+  .trio { display: grid; grid-template-columns: 1fr 290px 1fr; gap: 12px; }
+  .trio .cartao { margin: 0; }
   .area-grafico { position: relative; height: 300px; }
+  .conversao { display: flex; flex-direction: column; justify-content: center; }
+  .linha-conv { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+                padding: 8px 4px; border-bottom: 1px solid #e4e7eb; }
+  .linha-conv small { display: block; color: #3e4c59; font-size: .88rem; margin-top: 3px; white-space: nowrap; }
+  .linha-conv .taxa { font-size: 1.3rem; white-space: nowrap; }
+  .linha-conv.maior .taxa { color: #03543f; }
+  .linha-conv.menor .taxa { color: #9b1c1c; }
+  .compacta .linha-conv { padding: 5px 4px; }
+  .compacta .linha-conv .taxa { font-size: 1.05rem; }
+  .explica { margin: 12px 0 0; font-size: .78rem; color: #616e7c; line-height: 1.45; }
+  .cores { font-size: .85rem; color: #3e4c59; margin-top: 8px; }
+  .bolinha { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; }
+
+  /* Tabela de abertura e fechamento */
   table { width: 100%; border-collapse: collapse; font-size: .95rem; }
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e4e7eb; vertical-align: middle; }
-  /* Quadro de destaque da media do periodo, no cabecalho de cada coluna. */
   .media-periodo { margin-top: 6px; padding: 6px 10px; border-radius: 6px; background: #e8eef5;
                    border-left: 4px solid #12355b; font-weight: normal; color: #3e4c59; font-size: .8rem; }
   .media-periodo strong { display: block; font-size: 1.4rem; color: #12355b; }
@@ -28,70 +52,141 @@
   .etiqueta.forte { background: #def7ec; color: #03543f; }
   .legenda { margin-top: 10px; font-size: .9rem; color: #3e4c59; }
   .legenda div { margin: 4px 0; }
-  .cores { font-size: .85rem; color: #3e4c59; margin-top: 8px; }
-  .bolinha { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; }
-  /* No celular, os dois graficos ficam um embaixo do outro. */
-  @media (max-width: 600px) { .roscas { grid-template-columns: 1fr; } }
+
+  /* Celular: tudo empilhado */
+  @media (max-width: 800px) {
+    .resumo { grid-template-columns: 1fr 1fr; }
+    .trio { grid-template-columns: 1fr; }
+  }
 </style>
 
 <p class="sub trilha"><a href="{% url 'empresa_inicio' empresa.slug %}">{{ empresa.nome }}</a> &rsaquo; {{ loja.nome }}</p>
 <h1>{{ loja.nome }}</h1>
 <p class="sub">De {{ data_inicial|date:"d/m/Y" }} a {{ data_final|date:"d/m/Y" }}</p>
 
-{# Botoes de periodo: cada um recarrega a pagina com ?dias=N #}
+{# Botões de período: cada um recarrega a página com ?dias=N #}
 <nav class="periodos">
   {% for periodo in periodos %}
     <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
   {% endfor %}
 </nav>
 
-<div class="numeros">
-  <div class="cartao"><span>Entradas no periodo</span><strong>{{ total_entradas }}</strong></div>
-  <div class="cartao"><span>Media por dia</span><strong>{{ media_diaria }}</strong></div>
+{# ================= RESUMO DO PERÍODO ================= #}
+<h2 class="secao">Métricas do período</h2>
+<div class="resumo">
+  <div class="cartao"><span>Entradas</span><strong>{{ resumo.entradas }}</strong></div>
+  <div class="cartao"><span>Média de entradas por dia</span><strong>{{ media_diaria }}</strong></div>
+  <div class="cartao"><span>Vendas</span><strong>{{ resumo.vendas }}</strong></div>
+  <div class="cartao principal">
+    <span>Taxa de conversão</span>
+    <strong>{% if resumo.conversao is not None %}{{ resumo.conversao|floatformat:1 }}%{% else %}sem dados{% endif %}</strong>
+  </div>
+  <div class="cartao"><span>Faturamento</span><strong>R$ {{ resumo.faturamento|floatformat:"2g" }}</strong></div>
+  <div class="cartao"><span>Ticket médio</span><strong>{% if resumo.ticket_medio is not None %}R$ {{ resumo.ticket_medio|floatformat:"2g" }}{% else %}sem dados{% endif %}</strong></div>
+  <div class="cartao"><span>Receita por visitante</span><strong>{% if resumo.receita_por_visitante is not None %}R$ {{ resumo.receita_por_visitante|floatformat:"2g" }}{% else %}sem dados{% endif %}</strong></div>
 </div>
+<p class="explica">
+  <strong>Conversão</strong> = vendas &divide; entradas (de cada 100 pessoas que entraram, quantas compraram).
+  <strong>Ticket médio</strong> = valor médio de cada venda.
+  <strong>Receita por visitante</strong> = faturamento &divide; entradas (quanto cada pessoa que entrou rendeu, em média).
+</p>
 
+{# ================= FLUXO ================= #}
+<h2 class="secao">Fluxo de pessoas</h2>
 <div class="cartao">
   <h2>Entradas por dia</h2>
-  <canvas id="grafico-dias"></canvas>
+  <canvas id="grafico-dias" height="90"></canvas>
 </div>
-
 <div class="cartao">
   <h2>Quando a loja enche</h2>
-  <p class="nota">Media de entradas em cada hora do dia, no periodo.</p>
-  <canvas id="grafico-horas"></canvas>
+  <p class="nota">Média de entradas em cada hora do dia, no período.</p>
+  <canvas id="grafico-horas" height="90"></canvas>
 </div>
 
-<div class="roscas">
+{# ================= TRIO DOS TURNOS ================= #}
+<h2 class="secao">Entradas x vendas por turno</h2>
+<p class="nota">Manhã até 12h, tarde de 12h às 18h, noite depois das 18h.</p>
+<div class="trio">
   <div class="cartao">
-    <h2>Entradas por turno</h2>
-    <p class="nota">Manha ate 12h, tarde de 12h a 18h, noite depois das 18h.</p>
-    <div class="area-grafico"><canvas id="grafico-turnos"></canvas></div>
+    <h2>Entradas</h2>
+    <div class="area-grafico"><canvas id="grafico-turnos-entradas"></canvas></div>
+  </div>
+  <div class="cartao conversao">
+    <h2>Conversão</h2>
+    {% for grupo, ind in turnos %}
+      <div class="linha-conv {{ ind.destaque }}">
+        <span>
+          <strong>{{ grupo }}</strong>
+          {# A conta inteira: quantos entraram e quantos compraram neste turno. #}
+          <small>{{ ind.entradas }} entraram</small>
+          <small>{{ ind.vendas }} compraram</small>
+          <small>Ticket médio: R$ {{ ind.ticket_medio|floatformat:"2g"|default:"-" }}</small>
+        </span>
+        <strong class="taxa">
+          {% if ind.destaque == "maior" %}&#9650;{% elif ind.destaque == "menor" %}&#9660;{% endif %}
+          {% if ind.conversao is not None %}{{ ind.conversao|floatformat:1 }}%{% else %}-{% endif %}
+        </strong>
+      </div>
+    {% endfor %}
+    <p class="explica">
+      <strong>Conversão</strong> = compraram &divide; entraram. Ex.: 30% = de cada 100 pessoas que entraram, 30 compraram.<br>
+      <strong>Ticket médio</strong> = valor médio de cada venda.
+    </p>
   </div>
   <div class="cartao">
-    <h2>Entradas por dia da semana</h2>
-    <p class="nota">Total de entradas de cada dia e o peso dele no periodo.</p>
-    <div class="area-grafico"><canvas id="grafico-semana"></canvas></div>
+    <h2>Vendas</h2>
+    <div class="area-grafico"><canvas id="grafico-turnos-vendas"></canvas></div>
   </div>
 </div>
 <p class="cores">
-  Cores dos turnos:<span class="bolinha" style="background:#4e79a7"></span>maior movimento
-  <span class="bolinha" style="background:#f28e2b"></span>intermediario
-  <span class="bolinha" style="background:#e15759"></span>menor movimento
+  Cores das roscas:<span class="bolinha" style="background:#4e79a7"></span>maior
+  <span class="bolinha" style="background:#f28e2b"></span>intermediário
+  <span class="bolinha" style="background:#e15759"></span>menor
 </p>
 
+{# ================= TRIO DOS DIAS DA SEMANA ================= #}
+<h2 class="secao">Entradas x vendas por dia da semana</h2>
+<div class="trio">
+  <div class="cartao">
+    <h2>Entradas</h2>
+    <div class="area-grafico"><canvas id="grafico-semana-entradas"></canvas></div>
+  </div>
+  <div class="cartao conversao compacta">
+    <h2>Conversão</h2>
+    {% for grupo, ind in semana %}
+      <div class="linha-conv {{ ind.destaque }}">
+        <span>
+          <strong>{{ grupo }}</strong>
+          <small>{{ ind.entradas }} entraram</small>
+          <small>{{ ind.vendas }} compraram</small>
+
+        </span>
+        <strong class="taxa">
+          {% if ind.destaque == "maior" %}&#9650;{% elif ind.destaque == "menor" %}&#9660;{% endif %}
+          {% if ind.conversao is not None %}{{ ind.conversao|floatformat:1 }}%{% else %}-{% endif %}
+        </strong>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="cartao">
+    <h2>Vendas</h2>
+    <div class="area-grafico"><canvas id="grafico-semana-vendas"></canvas></div>
+  </div>
+</div>
+
+{# ================= ABERTURA E FECHAMENTO ================= #}
+<h2 class="secao">Abertura e fechamento</h2>
 <div class="cartao">
   <h2>Abertura e fechamento, dia a dia</h2>
-
   <table>
     <tr>
       <th>Data</th>
-      <th>Horario</th>
-      {# A regua do periodo, em destaque, uma vez so no cabecalho de cada coluna. #}
+      <th>Horário</th>
       <th>Abertura
-        <div class="media-periodo">media do periodo<strong>{{ pontas.media_abertura }}</strong></div>
+        <div class="media-periodo">média do período<strong>{{ pontas.media_abertura }}</strong></div>
       </th>
       <th>Fechamento
-        <div class="media-periodo">media do periodo<strong>{{ pontas.media_fechamento }}</strong></div>
+        <div class="media-periodo">média do período<strong>{{ pontas.media_fechamento }}</strong></div>
       </th>
     </tr>
     {% for linha in pontas.dias %}
@@ -108,122 +203,113 @@
         </td>
       </tr>
     {% empty %}
-      <tr><td colspan="4">Sem dados no periodo ou loja sem horario de funcionamento cadastrado.</td></tr>
+      <tr><td colspan="4">Sem dados no período ou loja sem horário de funcionamento cadastrado.</td></tr>
     {% endfor %}
   </table>
-
   <div class="legenda">
-    <div>Abaixo de 80% da media do periodo: <span class="etiqueta fraca">Abaixo do normal</span></div>
-    <div>De 80% a 120% da media do periodo: <span class="etiqueta normal">Normal</span></div>
-    <div>Acima de 120% da media do periodo: <span class="etiqueta forte">Acima do normal</span></div>
+    <div>Abaixo de 80% da média do período: <span class="etiqueta fraca">Abaixo do normal</span></div>
+    <div>De 80% a 120% da média do período: <span class="etiqueta normal">Normal</span></div>
+    <div>Acima de 120% da média do período: <span class="etiqueta forte">Acima do normal</span></div>
   </div>
 </div>
 
-{# json_script: entrega os numeros ao JavaScript de forma segura. #}
+{# json_script: entrega os números ao JavaScript de forma segura. #}
 {{ grafico_dias|json_script:"dados-dias" }}
 {{ grafico_horas|json_script:"dados-horas" }}
-{{ grafico_turnos|json_script:"dados-turnos" }}
-{{ grafico_semana|json_script:"dados-semana" }}
+{{ grafico_turnos_entradas|json_script:"dados-turnos-entradas" }}
+{{ grafico_turnos_vendas|json_script:"dados-turnos-vendas" }}
+{{ grafico_semana_entradas|json_script:"dados-semana-entradas" }}
+{{ grafico_semana_vendas|json_script:"dados-semana-vendas" }}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-{# Complemento oficial que escreve os valores DENTRO dos graficos. #}
+{# Complemento oficial que escreve os valores DENTRO dos gráficos. #}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
-  // Le os dados que o Django colocou na pagina.
   const ler = (id) => JSON.parse(document.getElementById(id).textContent);
-  const dias = ler("dados-dias");
-  const horas = ler("dados-horas");
-  const turnos = ler("dados-turnos");
-  const semana = ler("dados-semana");
-
-  // Numero no padrao brasileiro (2.134) e percentual do total.
   const br = (numero) => numero.toLocaleString("pt-BR");
   const percentual = (valor, lista) => {
     const total = lista.reduce((soma, item) => soma + item, 0);
     return total ? Math.round(valor / total * 100) : 0;
   };
 
-  // Cor pela POSICAO do valor: maior = azul, menor = vermelho, demais = laranja.
-  // As cores se recalculam sozinhas quando o periodo muda.
+  // Cor pela POSIÇÃO do valor: maior = azul, menor = vermelho, demais = laranja.
   const AZUL = "#4e79a7", LARANJA = "#f28e2b", VERMELHO = "#e15759";
   const coresPorPosicao = (valores) => {
-    const maior = Math.max(...valores);
-    const menor = Math.min(...valores);
-    return valores.map((valor) => (valor === maior ? AZUL : valor === menor ? VERMELHO : LARANJA));
+    const maior = Math.max(...valores), menor = Math.min(...valores);
+    return valores.map((v) => (v === maior ? AZUL : v === menor ? VERMELHO : LARANJA));
   };
+  // Uma cor bem distinta para cada dia da semana.
+  const CORES_DIAS = ["#4e79a7", "#f28e2b", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7"];
 
-  // --- Barras simples (sem valores escritos: sao muitas barras) ---
+  // --- Barras simples do fluxo ---
   const opcoesBarras = {
     plugins: { legend: { display: false }, datalabels: { display: false } },
     scales: { y: { beginAtZero: true } },
   };
-
+  const dias = ler("dados-dias");
   new Chart(document.getElementById("grafico-dias"), {
     type: "bar",
     data: { labels: dias.rotulos, datasets: [{ data: dias.valores, backgroundColor: "#2a5d8f" }] },
     options: opcoesBarras,
   });
-
+  const horas = ler("dados-horas");
   new Chart(document.getElementById("grafico-horas"), {
     type: "bar",
     data: { labels: horas.rotulos, datasets: [{ data: horas.valores, backgroundColor: "#12355b" }] },
     options: opcoesBarras,
   });
 
-  // --- Rosca dos turnos: percentual escrito dentro de cada fatia ---
-  new Chart(document.getElementById("grafico-turnos"), {
-    type: "doughnut",
-    plugins: [ChartDataLabels],
-    data: {
-      labels: turnos.rotulos,
-      datasets: [{ data: turnos.valores, backgroundColor: coresPorPosicao(turnos.valores) }],
-    },
-    options: {
-      maintainAspectRatio: false,  // ocupa a altura fixa da .area-grafico
-      plugins: {
-        legend: { position: "bottom" },
-        datalabels: {
-          color: "#fff",
-          font: { weight: "bold", size: 14 },
-          formatter: (valor) => percentual(valor, turnos.valores) + "%",
+  // --- Roscas dos turnos: percentual e nome do turno dentro de cada fatia ---
+  function rosca(idCanvas, dados, nomeMedida) {
+    new Chart(document.getElementById(idCanvas), {
+      type: "doughnut",
+      plugins: [ChartDataLabels],
+      data: { labels: dados.rotulos, datasets: [{ data: dados.valores, backgroundColor: coresPorPosicao(dados.valores) }] },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },  // o nome já aparece dentro de cada fatia
+          datalabels: {
+            color: "#fff",
+            textAlign: "center",
+            font: { weight: "bold", size: 14 },
+            // Duas linhas dentro da fatia: o percentual e, embaixo, o nome do turno.
+            formatter: (valor, contexto) =>
+              `${percentual(valor, dados.valores)}%\n${contexto.chart.data.labels[contexto.dataIndex]}`,
+          },
+          tooltip: { callbacks: { label: (c) => `${c.label}: ${br(c.parsed)} ${nomeMedida}` } },
         },
-        tooltip: { callbacks: { label: (c) => `${c.label}: ${br(c.parsed)} entradas` } },
       },
-    },
-  });
+    });
+  }
+  rosca("grafico-turnos-entradas", ler("dados-turnos-entradas"), "entradas");
+  rosca("grafico-turnos-vendas", ler("dados-turnos-vendas"), "vendas");
 
-  // --- Dias da semana: barras deitadas com "2.134 · 18%" na ponta ---
-   // --- Dias da semana: barras deitadas, cada dia com sua cor ---
-  // O texto "2.134 · 18%" fica DENTRO da barra, na ponta: assim a barra
-  // pode ocupar a largura toda, sem reservar espaco a direita.
-  new Chart(document.getElementById("grafico-semana"), {
-    type: "bar",
-    plugins: [ChartDataLabels],
-    data: {
-      labels: semana.rotulos,
-      datasets: [{
-        data: semana.valores,
-        backgroundColor: ["#4e79a7", "#f28e2b", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7"],
-        barPercentage: 0.85,
-      }],
-    },
-    options: {
-      maintainAspectRatio: false,  // ocupa a altura fixa da .area-grafico
-      indexAxis: "y",  // barras deitadas: o nome do dia fica a esquerda
-      plugins: {
-        legend: { display: false },
-        datalabels: {
-          anchor: "end",   // preso na ponta da barra...
-          align: "start",  // ...e escrito para DENTRO dela
-          color: "#fff",
-          font: { weight: "bold" },
-          formatter: (valor) => `${br(valor)} · ${percentual(valor, semana.valores)}%`,
+  // --- Barras deitadas dos dias da semana ("2.134 · 18%" dentro da barra) ---
+  function barrasSemana(idCanvas, dados) {
+    new Chart(document.getElementById(idCanvas), {
+      type: "bar",
+      plugins: [ChartDataLabels],
+      data: { labels: dados.rotulos, datasets: [{ data: dados.valores, backgroundColor: CORES_DIAS, barPercentage: 0.85 }] },
+      options: {
+        maintainAspectRatio: false,
+        indexAxis: "y",
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: "end",
+            align: "start",
+            color: "#fff",
+            font: { weight: "bold" },
+            formatter: (valor) => `${br(valor)} · ${percentual(valor, dados.valores)}%`,
+          },
+          tooltip: { enabled: false },
         },
-        tooltip: { enabled: false },
+        scales: { x: { beginAtZero: true, display: false, max: Math.max(...dados.valores) } },
       },
-      // A escala termina exatamente no maior valor: a maior barra vai ate a borda.
-      scales: { x: { beginAtZero: true, display: false, max: Math.max(...semana.valores) } },
-    },
-  });
+    });
+  }
+  barrasSemana("grafico-semana-entradas", ler("dados-semana-entradas"));
+  barrasSemana("grafico-semana-vendas", ler("dados-semana-vendas"));
 </script>
 {% endblock %}

@@ -22,7 +22,7 @@ from django.db.models.functions import ExtractHour, TruncDate
 
 from .models import Evento
 
-NOMES_DIAS = ["Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado", "Domingo"]
+NOMES_DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
 
 
 def _entradas_por_dia_e_hora(loja, data_inicial, data_final):
@@ -189,7 +189,7 @@ def pontas_por_dia(loja, data_inicial, data_final):
 
 # Turnos usados na rosca "entradas por turno": (nome, hora inicial, hora final).
 # A hora final NAO entra no turno: "Tarde" vai das 12:00 ate 17:59.
-TURNOS = [("Manha", 0, 12), ("Tarde", 12, 18), ("Noite", 18, 24)]
+TURNOS = [("Manhã", 0, 12), ("Tarde", 12, 18), ("Noite", 18, 24)]
 
 
 def entradas_por_turno(loja, data_inicial, data_final):
@@ -211,3 +211,99 @@ def entradas_por_dia_da_semana(loja, data_inicial, data_final):
     for (dia, _hora), total in contagem.items():
         totais[dia.weekday()] += total
     return list(zip(NOMES_DIAS, totais))
+
+# ======================================================================
+# PACOTE DE INDICADORES: entradas e vendas SEMPRE juntas.
+# Regra do produto: venda nunca aparece sozinha. Toda tela que mostra
+# venda recebe, da mesma funcao, as entradas e a conversao do mesmo grupo.
+# ======================================================================
+from decimal import Decimal
+
+from django.db.models import Sum
+
+from .models import VendaJanela
+
+
+def _vendas_por_dia_e_hora(loja, data_inicial, data_final):
+    """
+    Igual a _entradas_por_dia_e_hora, mas para as vendas.
+    Devolve {(dia, hora): (transacoes, faturamento)} na hora local da loja.
+    """
+    fuso = ZoneInfo(loja.fuso_horario)
+    inicio = datetime.combine(data_inicial, time.min, tzinfo=fuso)
+    fim = datetime.combine(data_final + timedelta(days=1), time.min, tzinfo=fuso)
+
+    vendas = VendaJanela.objects.filter(loja=loja, janela_inicio__gte=inicio, janela_inicio__lt=fim)
+    if loja.dados_validos_desde:
+        vendas = vendas.filter(janela_inicio__gte=loja.dados_validos_desde)
+
+    linhas = (
+        vendas
+        .annotate(dia=TruncDate("janela_inicio", tzinfo=fuso), hora=ExtractHour("janela_inicio", tzinfo=fuso))
+        .values("dia", "hora")
+        .annotate(transacoes=Sum("transacoes"), faturamento=Sum("faturamento"))
+    )
+    return {(linha["dia"], linha["hora"]): (linha["transacoes"], linha["faturamento"]) for linha in linhas}
+
+
+def calcular_indicadores(entradas, vendas, faturamento):
+    """
+    Os seis numeros de um grupo. As razoes sao calculadas AQUI, no fim,
+    a partir dos totais ja somados (nunca media de percentuais).
+    Razao impossivel (divisao por zero) fica None = "sem dados".
+    """
+    return {
+        "entradas": entradas,
+        "vendas": vendas,
+        "faturamento": faturamento,
+        "conversao": round(vendas / entradas * 100, 1) if entradas else None,
+        "ticket_medio": (faturamento / vendas).quantize(Decimal("0.01")) if vendas else None,
+        "receita_por_visitante": (faturamento / entradas).quantize(Decimal("0.01")) if entradas else None,
+    }
+
+
+def indicadores_agrupados(loja, data_inicial, data_final, grupo_de, grupos_em_ordem):
+    """
+    Junta entradas e vendas do periodo e soma por GRUPO.
+
+    grupo_de: funcao (dia, hora) -> nome do grupo (ex.: "Tarde", "Sexta").
+    grupos_em_ordem: lista dos grupos na ordem de exibicao; grupo sem dado sai zerado.
+    Devolve [(grupo, indicadores)].
+    """
+    entradas = _entradas_por_dia_e_hora(loja, data_inicial, data_final)
+    vendas = _vendas_por_dia_e_hora(loja, data_inicial, data_final)
+
+    # [entradas, vendas, faturamento] de cada grupo.
+    somas = {grupo: [0, 0, Decimal("0")] for grupo in grupos_em_ordem}
+    for (dia, hora), total in entradas.items():
+        somas[grupo_de(dia, hora)][0] += total
+    for (dia, hora), (transacoes, faturamento) in vendas.items():
+        soma = somas[grupo_de(dia, hora)]
+        soma[1] += transacoes
+        soma[2] += faturamento
+
+    return [(grupo, calcular_indicadores(*somas[grupo])) for grupo in grupos_em_ordem]
+
+
+def turno_da_hora(hora):
+    """Nome do turno de uma hora, pelos cortes de TURNOS."""
+    for nome, inicio, fim in TURNOS:
+        if inicio <= hora < fim:
+            return nome
+    return TURNOS[-1][0]
+
+
+def indicadores_do_periodo(loja, data_inicial, data_final):
+    """O resumo do topo da tela: os seis numeros do periodo inteiro."""
+    return indicadores_agrupados(loja, data_inicial, data_final, lambda dia, hora: "periodo", ["periodo"])[0][1]
+
+
+def indicadores_por_turno(loja, data_inicial, data_final):
+    nomes = [nome for nome, _inicio, _fim in TURNOS]
+    return indicadores_agrupados(loja, data_inicial, data_final, lambda dia, hora: turno_da_hora(hora), nomes)
+
+
+def indicadores_por_dia_da_semana(loja, data_inicial, data_final):
+    return indicadores_agrupados(
+        loja, data_inicial, data_final, lambda dia, hora: NOMES_DIAS[dia.weekday()], NOMES_DIAS
+    )
