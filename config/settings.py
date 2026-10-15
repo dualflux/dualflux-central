@@ -162,3 +162,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "inicio"
 LOGOUT_REDIRECT_URL = "login"
+
+# Numeros no padrao brasileiro nas telas: 2.911 e 14,2
+USE_THOUSAND_SEPARATOR = True
