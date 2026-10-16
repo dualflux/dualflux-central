@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load icones %}
 {% block titulo %}{{ loja.nome }} - DualFlux{% endblock %}
 
 {% block conteudo %}
@@ -78,7 +77,7 @@
   .insights-cabeca p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .9rem; }
   .insights ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 16px 0 0; }
   .insight { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid #eef2f7; background: #f8fafc; }
-  .insight .ins-icone { display: flex; flex-shrink: 0; font-size: 1.35rem; line-height: 1.2; }
+  .insight .ins-icone { font-size: 1.35rem; line-height: 1.2; }
   .insight p { margin: 0; color: #1e293b; line-height: 1.5; font-size: .95rem; }
   .insight.alerta { background: #fff5f5; border-color: #fee2e2; }
   .insight.pico { background: #fff7ed; border-color: #ffedd5; }
@@ -226,8 +225,8 @@
       <a class="hero-trilha" href="{% url 'empresa_inicio' empresa.slug %}">{{ empresa.nome }} &rsaquo;</a>
       <h1>{{ loja.nome }}</h1>
       <p class="hero-meta">
-        {% if loja.cidade %}{% icone "alfinete" 18 %} {{ loja.cidade }}{% if loja.uf %}/{{ loja.uf }}{% endif %} &nbsp;·&nbsp; {% endif %}
-        {% icone "despertador" 18 %} Hoje: {% if horario_hoje %}{{ horario_hoje.abre|time:"H:i" }}–{{ horario_hoje.fecha|time:"H:i" }}{% else %}fechada{% endif %}
+        {% if loja.cidade %}📍 {{ loja.cidade }}{% if loja.uf %}/{{ loja.uf }}{% endif %} &nbsp;·&nbsp; {% endif %}
+        🕘 Hoje: {% if horario_hoje %}{{ horario_hoje.abre|time:"H:i" }}–{{ horario_hoje.fecha|time:"H:i" }}{% else %}fechada{% endif %}
       </p>
     </div>
     {# Status ao vivo, vindo do heartbeat do servidor da loja. #}
@@ -249,7 +248,7 @@
   </div>
 
   <div class="hero-periodo">
-    <span class="data">{% icone "calendario" 18 %} {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span>
+    <span class="data">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span>
     <nav class="seletor">
       {% for periodo in periodos %}
         <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
@@ -306,12 +305,12 @@
 {% if insights %}
 <section class="insights">
   <div class="insights-cabeca">
-    <span class="icone">{% icone "lampada" 30 %}</span>
+    <span class="icone">💡</span>
     <div><h2>O que os números dizem</h2><p>Conclusões automáticas do período selecionado</p></div>
   </div>
   <ul>
     {% for insight in insights %}
-      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{{ insight.icone|icone_emoji }}</span><p>{{ insight.texto }}</p></li>
+      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{{ insight.icone }}</span><p>{{ insight.texto }}</p></li>
     {% endfor %}
   </ul>
 </section>
@@ -319,7 +318,7 @@
 
 {# ======================= MOVIMENTO ======================= #}
 <div class="secao s-azul">
-  <span class="icone">{% icone "porta" 30 %}</span>
+  <span class="icone">👥</span>
   <div><h2>Movimento</h2><p>Quantas pessoas entraram e quando</p></div>
 </div>
 {% with d=mapa.destaques %}
@@ -353,7 +352,7 @@
 
 {# ======================= VENDAS ======================= #}
 <div class="secao s-verde">
-  <span class="icone">{% icone "saco-dinheiro" 30 %}</span>
+  <span class="icone">💰</span>
   <div><h2>Vendas</h2><p>O que o movimento virou em vendas</p></div>
 </div>
 <div class="quadros">
@@ -391,7 +390,7 @@
 
 {# ======================= FLUXO ======================= #}
 <div class="secao s-azul">
-  <span class="icone">{% icone "grafico-sobe" 30 %}</span>
+  <span class="icone">📈</span>
   <div><h2>Fluxo de pessoas</h2><p>Entradas e vendas dia a dia e ao longo do dia</p></div>
 </div>
 <div class="cartao">
@@ -414,7 +413,7 @@
 
 {# ======================= MAPA DE HORARIOS ======================= #}
 <div class="secao s-laranja">
-  <span class="icone">{% icone "calendario-espiral" 30 %}</span>
+  <span class="icone">🗓️</span>
   <div><h2>Mapa de horários</h2><p>Os horários de pico de cada dia</p></div>
 </div>
 <div class="mapa-area">
@@ -496,7 +495,7 @@
 
 {# ======================= TRIO DOS TURNOS ======================= #}
 <div class="secao s-roxo">
-  <span class="icone">{% icone "nascer-sol" 30 %}</span>
+  <span class="icone">🌗</span>
   <div><h2>Entradas x vendas por turno</h2><p>Em que turno o movimento vira venda. Manhã até 12h, tarde de 12h às 18h, noite depois das 18h.</p></div>
 </div>
 <div class="trio">
@@ -538,7 +537,7 @@
 
 {# ======================= TRIO DOS DIAS DA SEMANA ======================= #}
 <div class="secao s-azul">
-  <span class="icone">{% icone "calendario" 30 %}</span>
+  <span class="icone">📅</span>
   <div><h2>Entradas x vendas por dia da semana</h2><p>Qual dia converte melhor</p></div>
 </div>
 <div class="trio">
@@ -570,7 +569,7 @@
 
 {# ======================= ABERTURA E FECHAMENTO ======================= #}
 <div class="secao s-grafite">
-  <span class="icone">{% icone "despertador" 30 %}</span>
+  <span class="icone">⏰</span>
   <div><h2>Abertura e fechamento</h2><p>Vale abrir mais cedo ou fechar mais tarde?</p></div>
 </div>
 <div class="cartao">
