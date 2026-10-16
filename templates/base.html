@@ -21,16 +21,87 @@
       --texto-apoio: #475569;
       --fundo: #f4f6fa;
       --borda: #e6eaf0;
+      --largura-menu: 256px;
     }
     body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--fundo); color: var(--texto); }
-    /* Barra do topo branca: e sobre fundo claro que a logo foi desenhada. */
-    header { display: flex; align-items: center; justify-content: space-between;
-             padding: 10px 24px; background: #fff; border-bottom: 1px solid var(--borda); }
-    /* mix-blend-mode: multiply faz o fundo cinza-claro do arquivo da logo "sumir" no branco. */
-    header .logo img { height: 38px; display: block; mix-blend-mode: multiply; }
-    header .usuario { display: flex; align-items: center; gap: 12px; color: var(--texto-apoio); font-size: .9rem; }
-    header form { display: inline; margin: 0; }
-    main { max-width: 720px; margin: 28px auto; padding: 0 16px; }
+
+    /* =================== MENU LATERAL (esquerda) =================== */
+    .lateral { position: fixed; top: 0; left: 0; bottom: 0; z-index: 60; width: var(--largura-menu);
+               box-sizing: border-box; display: flex; flex-direction: column; padding: 16px 12px;
+               background: #fff; border-right: 1px solid var(--borda); overflow-y: auto;
+               transition: transform .2s ease; }
+    .lateral-logo { display: block; padding: 4px 8px 18px; }
+    .lateral-logo img { height: 40px; display: block; }
+    .lateral-empresa { margin: 0 8px 8px; padding: 10px 12px; border-radius: 12px; background: #f6f8fc;
+                       border: 1px solid var(--borda); }
+    .lateral-empresa small { display: block; color: #94a3b8; font-size: .7rem; font-weight: 700;
+                             letter-spacing: .08em; text-transform: uppercase; }
+    .lateral-empresa strong { font-size: .95rem; }
+    .grupo { display: block; margin: 18px 12px 6px; color: #94a3b8; font-size: .7rem; font-weight: 700;
+             letter-spacing: .08em; text-transform: uppercase; }
+    .lateral nav a, .em-breve { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 2px 0;
+                                border-radius: 10px; font-size: .92rem; text-decoration: none; }
+    .lateral nav a { color: var(--texto); font-weight: 500; }
+    .lateral nav a:hover { background: #f1f5ff; color: var(--marca-azul); }
+    /* Item da tela aberta: fundo azul claro e uma barrinha azul a esquerda. */
+    .lateral nav a.ativo { background: #eaf1ff; color: var(--marca-azul); font-weight: 700;
+                           box-shadow: inset 3px 0 0 var(--marca-azul); }
+    .lateral nav .icone-loja { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+                               border-radius: 8px; background: #eef2f7; font-size: .8rem; font-weight: 700;
+                               color: var(--texto-apoio); flex-shrink: 0; }
+    .lateral nav a.ativo .icone-loja { background: var(--marca-azul); color: #fff; }
+    .em-breve { color: #94a3b8; cursor: default; }
+    .em-breve em { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: #f1f3f5;
+                   font-size: .66rem; font-style: normal; font-weight: 700; text-transform: uppercase; }
+    .lateral-rodape { margin-top: auto; padding: 14px 12px 4px; color: #94a3b8; font-size: .75rem; }
+
+    /* Com menu, o conteudo comeca depois dele. */
+    .com-menu .area { margin-left: var(--largura-menu); }
+    .com-menu header .logo { display: none; }   /* a logo ja esta no menu */
+    .botao-menu, .fundo-menu { display: none; }
+
+    /* =================== BARRA DO TOPO =================== */
+    header { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between;
+             gap: 12px; padding: 10px 24px; background: rgba(255, 255, 255, .92); border-bottom: 1px solid var(--borda);
+             backdrop-filter: blur(8px); }
+    .com-menu header { justify-content: flex-end; }
+    header .logo img { height: 38px; display: block; }
+    .botao-menu { align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px;
+                  border: 1px solid var(--borda); background: #fff; font-size: 1.3rem; cursor: pointer; }
+
+    /* ---------- Area do usuario: avatar + nome + papel, com menu ao clicar ---------- */
+    .conta { position: relative; }
+    /* <details>/<summary>: menu nativo do navegador, sem JavaScript (funciona em qualquer aparelho). */
+    .conta summary { display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 6px; border-radius: 999px;
+                     border: 1px solid var(--borda); background: #fff; cursor: pointer; list-style: none;
+                     transition: box-shadow .15s, border-color .15s; }
+    .conta summary::-webkit-details-marker { display: none; }
+    .conta summary:hover, .conta[open] summary { border-color: #c9d6ff; box-shadow: 0 4px 14px rgba(10, 92, 255, .12); }
+    .avatar { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px;
+              border-radius: 50%; color: #fff; font-weight: 700; font-size: .95rem;
+              background: linear-gradient(135deg, #0a5cff, #3b82f6); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .15); }
+    .conta-texto { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+    .conta-nome { font-weight: 700; font-size: .9rem; color: var(--texto); white-space: nowrap; overflow: hidden;
+                  text-overflow: ellipsis; max-width: 220px; }
+    .conta-papel { font-size: .76rem; color: var(--texto-apoio); white-space: nowrap; overflow: hidden;
+                   text-overflow: ellipsis; max-width: 220px; }
+    .seta { color: var(--texto-apoio); font-size: .75rem; transition: transform .15s; }
+    .conta[open] .seta { transform: rotate(180deg); }
+    .menu { position: absolute; right: 0; top: calc(100% + 8px); width: 260px; padding: 8px; border-radius: 14px;
+            background: #fff; border: 1px solid var(--borda); box-shadow: 0 16px 40px rgba(15, 23, 42, .14); }
+    .menu-email { padding: 10px 12px; font-size: .82rem; color: var(--texto-apoio); word-break: break-all;
+                  border-bottom: 1px solid var(--borda); margin-bottom: 6px; }
+    .menu-email strong { display: block; color: var(--texto); font-size: .9rem; margin-bottom: 2px; word-break: normal; }
+    .menu a, .menu button { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;
+                            padding: 10px 12px; margin: 0; border: 0; border-radius: 10px; background: none;
+                            color: var(--texto); font: inherit; font-size: .9rem; text-align: left; text-decoration: none;
+                            cursor: pointer; }
+    .menu a:hover, .menu button:hover { background: #f1f5ff; color: var(--marca-azul); }
+    .menu form { margin: 0; border-top: 1px solid var(--borda); padding-top: 6px; margin-top: 6px; }
+    .menu .sair:hover { background: #fff1f2; color: #dc2626; }
+
+    /* =================== Elementos comuns das telas =================== */
+    main { max-width: 720px; margin: 28px auto; padding: 0 20px; }
     .cartao { background: #fff; border-radius: 14px; padding: 22px; border: 1px solid var(--borda);
               box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .05); }
     label { display: block; margin: 12px 0 4px; font-weight: 600; }
@@ -38,34 +109,116 @@
             font-size: 1rem; font-family: inherit; }
     button { margin-top: 16px; padding: 10px 18px; border: 0; border-radius: 8px; background: var(--marca-azul);
              color: #fff; font-size: 1rem; font-weight: 600; font-family: inherit; cursor: pointer; }
-    header button { margin: 0; padding: 7px 14px; font-size: .85rem; background: var(--marca-grafite); }
     .erro { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 8px; }
     .sub, .nota { color: var(--texto-apoio); }
     .lojas { list-style: none; padding: 0; }
     .lojas li { background: #fff; margin: 8px 0; padding: 14px; border-radius: 10px; border: 1px solid var(--borda);
                 display: flex; justify-content: space-between; }
     .lojas a { color: var(--marca-azul); text-decoration: none; }
+
+    /* =================== Tablet, celular e totem estreito =================== */
+    /* O menu vira uma "gaveta": escondido a esquerda, abre pelo botao (☰). */
+    @media (max-width: 1024px) {
+      .com-menu .area { margin-left: 0; }
+      .lateral { transform: translateX(-100%); box-shadow: 0 0 40px rgba(15, 23, 42, .2); }
+      .com-menu header { justify-content: space-between; }
+      .com-menu header .logo { display: block; }
+      .botao-menu { display: flex; }
+      /* Quando a caixinha escondida esta marcada, a gaveta aparece e o fundo escurece. */
+      #abre-menu:checked ~ .lateral { transform: none; }
+      #abre-menu:checked ~ .fundo-menu { display: block; position: fixed; inset: 0; z-index: 55;
+                                         background: rgba(15, 23, 42, .35); }
+      .inicio-barra { display: flex; align-items: center; gap: 10px; }
+    }
+    @media (max-width: 600px) {
+      header { padding: 8px 14px; }
+      header .logo img { height: 32px; }
+      .conta summary { padding: 4px; border-color: transparent; }
+      .conta-texto, .seta { display: none; }
+      .menu { width: min(280px, calc(100vw - 28px)); }
+    }
   </style>
 </head>
-<body>
-  <header>
-    <a class="logo" href="{% url 'inicio' %}">
-      <img src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
-    </a>
-    {% if user.is_authenticated %}
-      <span class="usuario">
-        {{ user.email }}
-        {# Sair e feito por POST (formulario), nao por link: assim um link malicioso #}
-        {# em outro site nao consegue deslogar o usuario sem ele clicar. #}
-        <form method="post" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button type="submit">Sair</button>
-        </form>
+<body class="{% if menu_empresa %}com-menu{% endif %}">
+  {% if menu_empresa %}
+    {# Caixinha escondida que controla a gaveta do menu no celular/tablet (sem JavaScript). #}
+    <input type="checkbox" id="abre-menu" hidden>
+
+    <aside class="lateral">
+      <a class="lateral-logo" href="{% url 'empresa_inicio' menu_empresa.slug %}">
+        <img src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
+      </a>
+      <div class="lateral-empresa"><small>Empresa</small><strong>{{ menu_empresa.nome }}</strong></div>
+
+      <nav>
+        <span class="grupo">Análises</span>
+        <a href="{% url 'empresa_inicio' menu_empresa.slug %}" class="{% if menu_tela == 'empresa_inicio' %}ativo{% endif %}">📊 Visão da rede</a>
+
+        <span class="grupo">Lojas</span>
+        {% for loja in menu_lojas %}
+          <a href="{% url 'loja_painel' menu_empresa.slug loja.slug %}" class="{% if loja.slug == menu_loja_atual %}ativo{% endif %}">
+            <span class="icone-loja">{{ loja.nome|cut:"Loja "|first|upper }}</span>{{ loja.nome }}
+          </a>
+        {% empty %}
+          <span class="em-breve">Nenhuma loja disponível</span>
+        {% endfor %}
+
+        <span class="grupo">Gestão</span>
+        <span class="em-breve">📈 Relatórios <em>em breve</em></span>
+        <span class="em-breve">🔔 Alertas <em>em breve</em></span>
+        <span class="em-breve">👥 Equipe <em>em breve</em></span>
+        <span class="em-breve">⚙️ Configurações <em>em breve</em></span>
+      </nav>
+
+      <div class="lateral-rodape">DualFlux &middot; fluxo e conversão</div>
+    </aside>
+    {# Fundo escuro atras da gaveta: clicar nele fecha o menu. #}
+    <label for="abre-menu" class="fundo-menu" aria-label="Fechar menu"></label>
+  {% endif %}
+
+  <div class="area">
+    <header>
+      <span class="inicio-barra">
+        {% if menu_empresa %}<label for="abre-menu" class="botao-menu" aria-label="Abrir menu">☰</label>{% endif %}
+        <a class="logo" href="{% url 'inicio' %}">
+          <img src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
+        </a>
       </span>
-    {% endif %}
-  </header>
-  <main>
-    {% block conteudo %}{% endblock %}
-  </main>
+      {% if user.is_authenticated %}
+        <details class="conta">
+          <summary>
+            {# Inicial do nome; sem nome cadastrado, a inicial do e-mail. #}
+            <span class="avatar">{{ user.first_name|default:user.email|first|upper }}</span>
+            <span class="conta-texto">
+              <span class="conta-nome">{% if user.first_name %}{{ user.get_full_name }}{% else %}{{ user.email|truncatechars:26 }}{% endif %}</span>
+              <span class="conta-papel">{{ user.get_papel_display }}{% if user.empresa %} · {{ user.empresa.nome }}{% endif %}</span>
+            </span>
+            <span class="seta">▾</span>
+          </summary>
+          <div class="menu">
+            <div class="menu-email">
+              <strong>{% if user.first_name %}{{ user.get_full_name }}{% else %}Conectado como{% endif %}</strong>
+              {{ user.email }}
+            </div>
+            {% if user.empresa %}
+              <a href="{% url 'empresa_inicio' user.empresa.slug %}">🏪 Minhas lojas</a>
+            {% endif %}
+            {% if user.is_staff %}
+              <a href="{% url 'admin:index' %}">⚙️ Administração DualFlux</a>
+            {% endif %}
+            {# Sair e feito por POST (formulario), nao por link: assim um link malicioso #}
+            {# em outro site nao consegue deslogar o usuario sem ele clicar. #}
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="sair">↪ Sair</button>
+            </form>
+          </div>
+        </details>
+      {% endif %}
+    </header>
+    <main>
+      {% block conteudo %}{% endblock %}
+    </main>
+  </div>
 </body>
 </html>

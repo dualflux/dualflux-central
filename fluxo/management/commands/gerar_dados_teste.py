@@ -3,6 +3,7 @@ Comando: gera dados de TESTE de fluxo E de vendas para uma loja.
 
 Uso (dentro do container):
     python manage.py gerar_dados_teste --loja loja-centro --dias 42 --limpar
+    python manage.py gerar_dados_teste --loja loja-bairro --dias 190 --limpar --semente 7 --conversao 0.27 0.17 0.30
 
 Entradas: falsas, mas com o "formato" de uma farmacia real:
 - picos de manha (8-10h), almoco (12-13h) e fim de tarde (17-19h);
@@ -11,9 +12,10 @@ Entradas: falsas, mas com o "formato" de uma farmacia real:
 - so dentro do horario de funcionamento da loja.
 
 Vendas: criadas A PARTIR das entradas, janela por janela de 15 minutos,
-com conversao diferente por turno (de proposito, para o dashboard
-contar uma historia):
-- manha ~31%, tarde ~24% (pico com balcao sobrecarregado), noite ~34%.
+com conversao diferente por turno (de proposito, para o dashboard contar
+uma historia). Padrao: manha ~31%, tarde ~24%, noite ~34%.
+Com --conversao MANHA TARDE NOITE, cada loja ganha o seu proprio perfil,
+e o comparativo da rede mostra lojas que convertem diferente.
 
 PROTECAO: so roda com DEBUG=True (nunca em producao).
 """
@@ -50,20 +52,22 @@ MEDIA_POR_HORA = {
 # Peso de cada dia da semana (sexta um pouco mais forte, domingo bem mais fraco).
 PESO_DO_DIA = {0: 1.05, 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.1, 5: 0.85, 6: 0.55}
 
-# Conversao de teste por turno (mesmos cortes da tela: manha <12h, tarde 12-18h, noite >=18h).
-CONVERSAO_POR_TURNO = [(12, 0.31), (18, 0.24), (24, 0.34)]  # (hora final do turno, conversao)
+# Conversao padrao por turno: manha (< 12h), tarde (12h-18h), noite (>= 18h).
+CONVERSAO_PADRAO = (0.31, 0.24, 0.34)
 
 # Valor medio de UMA venda (ticket) e sua variacao, em reais.
 TICKET_MEDIO = 62.0
 TICKET_VARIACAO = 18.0
 
 
-def conversao_da_hora(hora):
-    """Conversao de teste conforme o turno da hora."""
-    for hora_final, conversao in CONVERSAO_POR_TURNO:
-        if hora < hora_final:
-            return conversao
-    return CONVERSAO_POR_TURNO[-1][1]
+def conversao_da_hora(hora, conversao):
+    """Conversao de teste conforme o turno da hora. conversao = (manha, tarde, noite)."""
+    manha, tarde, noite = conversao
+    if hora < 12:
+        return manha
+    if hora < 18:
+        return tarde
+    return noite
 
 
 class Command(BaseCommand):
@@ -76,6 +80,10 @@ class Command(BaseCommand):
                             help="Apaga TODOS os eventos e vendas da loja antes de gerar")
         parser.add_argument("--semente", type=int, default=42,
                             help="Semente do sorteio: a mesma semente gera sempre os mesmos dados")
+        parser.add_argument("--conversao", type=float, nargs=3, metavar=("MANHA", "TARDE", "NOITE"),
+                            help="Conversao de cada turno, de 0 a 1. Ex.: --conversao 0.27 0.17 0.30")
+        parser.add_argument("--ticket", type=float, default=TICKET_MEDIO,
+                            help=f"Valor medio de cada venda, em reais (padrao {TICKET_MEDIO:.0f})")
 
     def handle(self, *args, **opcoes):
         # Trava de seguranca: nunca rodar em producao.
@@ -86,6 +94,10 @@ class Command(BaseCommand):
         if lojas.count() != 1:
             raise CommandError(f'Loja "{opcoes["loja"]}" nao encontrada (ou existe em mais de uma empresa).')
         loja = lojas.get()
+
+        conversao = tuple(opcoes["conversao"]) if opcoes["conversao"] else CONVERSAO_PADRAO
+        if not all(0 <= valor <= 1 for valor in conversao):
+            raise CommandError("Cada conversao deve estar entre 0 e 1 (ex.: 0.25 = 25%).")
 
         random.seed(opcoes["semente"])
         fuso = ZoneInfo(loja.fuso_horario)
@@ -133,29 +145,29 @@ class Command(BaseCommand):
         # Grava em blocos de 5.000: bem mais rapido que um por um.
         Evento.objects.bulk_create(eventos, batch_size=5000)
 
-        vendas = self._vendas_das_janelas(loja, entradas_por_janela, fuso)
+        vendas = self._vendas_das_janelas(loja, entradas_por_janela, fuso, conversao, opcoes["ticket"])
         VendaJanela.objects.bulk_create(vendas, batch_size=5000)
 
         entradas = len(eventos) // 2
         total_vendas = sum(venda.transacoes for venda in vendas)
         faturamento = sum(venda.faturamento for venda in vendas)
-        conversao = total_vendas / entradas * 100 if entradas else 0
+        taxa = total_vendas / entradas * 100 if entradas else 0
         self.stdout.write(self.style.SUCCESS(
-            f"Gerados {entradas} entradas e {total_vendas} vendas (conversao {conversao:.1f}%, "
+            f"Gerados {entradas} entradas e {total_vendas} vendas (conversao {taxa:.1f}%, "
             f"faturamento R$ {faturamento:,.2f}) em {opcoes['dias']} dias para {loja}."
         ))
 
     @staticmethod
-    def _vendas_das_janelas(loja, entradas_por_janela, fuso):
+    def _vendas_das_janelas(loja, entradas_por_janela, fuso, conversao, ticket):
         """
         Para cada janela de 15 min: cada entrada "decide" se compra,
         com a probabilidade do turno; cada compra recebe um valor sorteado.
         """
         vendas = []
         for janela, entradas in entradas_por_janela.items():
-            conversao = conversao_da_hora(janela.hour)
-            transacoes = sum(1 for _ in range(entradas) if random.random() < conversao)
-            valor = sum(max(5.0, random.gauss(TICKET_MEDIO, TICKET_VARIACAO)) for _ in range(transacoes))
+            chance = conversao_da_hora(janela.hour, conversao)
+            transacoes = sum(1 for _ in range(entradas) if random.random() < chance)
+            valor = sum(max(5.0, random.gauss(ticket, TICKET_VARIACAO)) for _ in range(transacoes))
             vendas.append(VendaJanela(
                 loja=loja,
                 janela_inicio=janela.replace(tzinfo=fuso),
