@@ -10,14 +10,20 @@
     --vendas: #10b981;     /* verde = vendas, dinheiro */
     --pico: #f97316;       /* laranja = pico, destaque de decisao */
   }
-  .cartao { margin-bottom: 16px; }
-  /* Titulo dentro das caixas: cabecalho de widget, com bolinha e linha separadora. */
+  /* Nenhum elemento pode passar da largura da tela. */
+  html, body { overflow-x: hidden; }
+  .cartao { margin-bottom: 16px; min-width: 0; }
+  /* Itens de grade nunca maiores que a coluna: evita o "estouro" da tela. */
+  .kpis > *, .duas > *, .trio > *, .mapa-area > *, .quadros > *, .insights ul > * { min-width: 0; }
+  canvas { max-width: 100%; }
   .cartao h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding-bottom: 10px;
                font-size: 1.02rem; font-weight: 700; color: var(--texto); border-bottom: 1px solid var(--borda); }
   .cartao h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--marca-azul); flex-shrink: 0; }
   .cartao h2 + .nota { margin: -4px 0 14px; font-size: .9rem; font-weight: 500; color: var(--texto-apoio); }
   .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .duas .cartao { margin: 0; }
+  /* Tabelas largas rolam DENTRO do cartao, sem empurrar a pagina. */
+  .rolagem { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   /* ---------- Cabecalho vitrine (hero) ---------- */
   .hero { position: relative; overflow: hidden; color: #fff; border-radius: 22px; padding: 28px 30px;
@@ -28,7 +34,7 @@
           box-shadow: 0 24px 48px rgba(15, 23, 42, .22); }
   .hero-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
   .hero-trilha { color: #9db8ff; text-decoration: none; font-size: .9rem; font-weight: 600; }
-  .hero h1 { margin: 4px 0 6px; font-size: 2.3rem; font-weight: 800; letter-spacing: -.02em; }
+  .hero h1 { margin: 4px 0 6px; font-size: 2.3rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
   .hero-meta { margin: 0; color: #cbd5e1; font-size: .95rem; }
   .status { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px;
             background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); font-weight: 700; }
@@ -39,19 +45,24 @@
   .status.semdados .ponto { background: #94a3b8; }
   .hero-periodo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
   .hero-periodo .data { color: #e2e8f0; font-weight: 600; }
-  .seletor { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08); }
-  .seletor a { padding: 7px 15px; border-radius: 999px; color: #e2e8f0; text-decoration: none; font-weight: 600; font-size: .88rem; }
+  .seletor { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08);
+             max-width: 100%; overflow-x: auto; }
+  .seletor a { padding: 7px 15px; border-radius: 999px; color: #e2e8f0; text-decoration: none; font-weight: 600;
+               font-size: .88rem; white-space: nowrap; }
   .seletor a.ativo { background: #fff; color: #14161a; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 22px; }
+  /* auto-fit: 4 colunas no PC, 2 no tablet, 1 no celular, sem estourar. */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 22px; }
   .kpi { padding: 16px 18px; border-radius: 16px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
   .kpi.principal { background: linear-gradient(135deg, rgba(10, 92, 255, .65), rgba(10, 92, 255, .25)); border-color: rgba(140, 175, 255, .55); }
   .kpi-nome { color: #cbd5e1; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-  .kpi strong { display: block; margin: 6px 0 8px; font-size: 2.05rem; font-weight: 800; letter-spacing: -.02em; }
-  .delta { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+  .kpi strong { display: block; margin: 6px 0 8px; font-size: 2rem; font-weight: 800; letter-spacing: -.02em;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .tendencia { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .delta { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
   .delta.sobe { background: rgba(34, 197, 94, .2); color: #86efac; }
   .delta.cai { background: rgba(239, 68, 68, .2); color: #fca5a5; }
   .delta.neutro { background: rgba(255, 255, 255, .08); color: #cbd5e1; font-weight: 600; }
-  .kpi small { margin-left: 6px; color: #94a3b8; font-size: .75rem; }
+  .kpi small { color: #94a3b8; font-size: .75rem; }
   .spark { position: relative; height: 44px; margin-top: 10px; }
 
   /* ---------- O que os numeros dizem ---------- */
@@ -60,9 +71,11 @@
   .insights::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 5px; border-radius: 0 5px 5px 0;
                       background: linear-gradient(180deg, var(--entradas), var(--vendas)); }
   .insights-cabeca { display: flex; align-items: center; gap: 12px; }
+  .insights-cabeca .icone { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                            width: 46px; height: 46px; border-radius: 13px; font-size: 1.35rem; background: #fef9c3; }
   .insights-cabeca h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
   .insights-cabeca p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .9rem; }
-  .insights ul { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; list-style: none; padding: 0; margin: 16px 0 0; }
+  .insights ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 16px 0 0; }
   .insight { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid #eef2f7; background: #f8fafc; }
   .insight .ins-icone { font-size: 1.35rem; line-height: 1.2; }
   .insight p { margin: 0; color: #1e293b; line-height: 1.5; font-size: .95rem; }
@@ -82,14 +95,13 @@
   .s-verde .icone { background: #e7f8f1; }
   .s-laranja .icone { background: #fff1e6; }
   .s-roxo .icone { background: #f3e8ff; }
-  .s-amarelo .icone { background: #fef9c3; }
   .s-grafite .icone { background: #eef0f3; }
 
   /* ---------- Quadros de movimento e vendas ---------- */
-  .quadros { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 12px; }
+  .quadros { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 12px; }
   .quadros .cartao { margin: 0; padding: 18px; }
   .quadros .titulo { display: block; color: var(--texto-apoio); font-size: .88rem; font-weight: 600; }
-  .quadros strong { display: block; margin: 6px 0 4px; font-size: 1.65rem; font-weight: 800; letter-spacing: -.01em; color: var(--texto); }
+  .quadros strong { display: block; margin: 6px 0 4px; font-size: 1.6rem; font-weight: 800; letter-spacing: -.01em; color: var(--texto); }
   .quadros .apoio { display: block; color: var(--texto-apoio); font-size: .84rem; }
   .quadros .principal { background: linear-gradient(135deg, #0a5cff, #3b82f6); border-color: transparent; }
   .quadros .principal .titulo, .quadros .principal strong, .quadros .principal .apoio { color: #fff; }
@@ -103,8 +115,7 @@
   /* ---------- Mapa de horarios ---------- */
   .mapa-area { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
   .mapa-area > .cartao { margin: 0; }
-  .rolagem { overflow-x: auto; }
-  table.grade { border-collapse: separate; border-spacing: 4px; width: 100%; }
+  table.grade { border-collapse: separate; border-spacing: 4px; width: 100%; min-width: 480px; }
   table.grade th, table.grade td { padding: 6px 4px; text-align: center; font-size: .85rem; }
   table.grade th { color: var(--texto-apoio); font-weight: 600; }
   td.celula { border-radius: 7px; font-weight: 700; min-width: 44px; }
@@ -141,7 +152,7 @@
   .bolinha { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; }
 
   /* ---------- Abertura e fechamento ---------- */
-  table.pontas { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  table.pontas { width: 100%; min-width: 520px; border-collapse: collapse; font-size: .95rem; }
   table.pontas th, table.pontas td { text-align: left; padding: 10px 6px; border-bottom: 1px solid var(--borda); vertical-align: middle; }
   .media-periodo { margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: #eef4ff;
                    border-left: 4px solid var(--marca-azul); font-weight: 500; color: var(--texto-apoio); font-size: .8rem; }
@@ -154,11 +165,56 @@
   .legenda { margin-top: 12px; font-size: .9rem; color: var(--texto-apoio); }
   .legenda div { margin: 5px 0; }
 
-  /* ---------- Celular ---------- */
-  @media (max-width: 900px) {
-    .kpis { grid-template-columns: 1fr 1fr; }
-    .insights ul, .duas, .trio, .mapa-area { grid-template-columns: 1fr; }
-    .hero h1 { font-size: 1.8rem; }
+  /* ================= ADAPTACAO A CADA TIPO DE TELA ================= */
+
+  /* Telas grandes, TV e totem deitado: mais largura e letras maiores, para ler de longe. */
+  @media (min-width: 1600px) {
+    main { max-width: 1440px; }
+    .hero h1 { font-size: 2.8rem; }
+    .kpi strong { font-size: 2.5rem; }
+    .quadros strong { font-size: 1.9rem; }
+    .secao h2 { font-size: 1.45rem; }
+    .area-linhas { height: 400px; }
+    .area-barras { height: 320px; }
+  }
+
+  /* Tablet, notebook pequeno e totem em pe. */
+  @media (max-width: 1100px) {
+    /* Trio: os dois graficos lado a lado e a conversao embaixo, em largura total. */
+    .trio { grid-template-columns: 1fr 1fr; }
+    .trio .conversao { grid-column: 1 / -1; order: 3; }
+    .mapa-area { grid-template-columns: 1fr; }
+  }
+
+  /* Celular. */
+  @media (max-width: 760px) {
+    main { margin: 16px auto; padding: 0 12px; }
+    .hero { padding: 20px 18px; border-radius: 18px; }
+    .hero h1 { font-size: 1.7rem; }
+    .hero-periodo { flex-direction: column; align-items: flex-start; }
+    .kpis { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi { padding: 14px; }
+    .kpi strong { font-size: 1.5rem; }
+    .duas, .trio { grid-template-columns: 1fr; }
+    .secao { margin: 34px 0 12px; }
+    .secao h2 { font-size: 1.12rem; }
+    .secao p { font-size: .85rem; }
+    .area-linhas { height: 260px; }
+    .insights { padding: 18px 16px 18px 22px; }
+    .insights ul { grid-template-columns: 1fr; }
+    /* Na barra do topo, so o botao Sair (o e-mail ocupa espaco demais). */
+    header .usuario { font-size: 0; }
+  }
+
+  /* Celular bem estreito: os 4 numeros um embaixo do outro. */
+  @media (max-width: 420px) {
+    .kpis { grid-template-columns: 1fr; }
+    .kpi strong { font-size: 1.8rem; }
+  }
+
+  /* Telas de toque (celular, tablet, totem): alvos maiores para o dedo. */
+  @media (pointer: coarse) {
+    .seletor a { padding: 10px 16px; }
   }
 </style>
 
@@ -205,33 +261,41 @@
     <div class="kpi">
       <span class="kpi-nome">Entradas</span>
       <strong>{{ resumo.entradas }}</strong>
-      {% if comparacao and comparacao.entradas %}
-        <span class="delta {% if comparacao.entradas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.entradas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.entradas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
-      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="tendencia">
+        {% if comparacao and comparacao.entradas %}
+          <span class="delta {% if comparacao.entradas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.entradas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.entradas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+        {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      </div>
       <div class="spark"><canvas id="spark-entradas"></canvas></div>
     </div>
     <div class="kpi">
       <span class="kpi-nome">Vendas</span>
       <strong>{{ resumo.vendas }}</strong>
-      {% if comparacao and comparacao.vendas %}
-        <span class="delta {% if comparacao.vendas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.vendas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.vendas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
-      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="tendencia">
+        {% if comparacao and comparacao.vendas %}
+          <span class="delta {% if comparacao.vendas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.vendas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.vendas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+        {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      </div>
       <div class="spark"><canvas id="spark-vendas"></canvas></div>
     </div>
     <div class="kpi principal">
       <span class="kpi-nome">Conversão</span>
       <strong>{% if resumo.conversao is not None %}{{ resumo.conversao|floatformat:1 }}%{% else %}–{% endif %}</strong>
-      {% if comparacao and comparacao.conversao %}
-        <span class="delta {% if comparacao.conversao.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.conversao.sobe %}▲{% else %}▼{% endif %} {{ comparacao.conversao.valor|floatformat:1 }} p.p.</span><small>vs. {{ dias }} dias anteriores</small>
-      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="tendencia">
+        {% if comparacao and comparacao.conversao %}
+          <span class="delta {% if comparacao.conversao.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.conversao.sobe %}▲{% else %}▼{% endif %} {{ comparacao.conversao.valor|floatformat:1 }} p.p.</span><small>vs. {{ dias }} dias anteriores</small>
+        {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      </div>
       <div class="spark"><canvas id="spark-conversao"></canvas></div>
     </div>
     <div class="kpi">
       <span class="kpi-nome">Receita por visitante</span>
       <strong>{% if resumo.receita_por_visitante is not None %}R$ {{ resumo.receita_por_visitante|floatformat:"2g" }}{% else %}–{% endif %}</strong>
-      {% if comparacao and comparacao.receita_por_visitante %}
-        <span class="delta {% if comparacao.receita_por_visitante.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.receita_por_visitante.sobe %}▲{% else %}▼{% endif %} {{ comparacao.receita_por_visitante.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
-      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="tendencia">
+        {% if comparacao and comparacao.receita_por_visitante %}
+          <span class="delta {% if comparacao.receita_por_visitante.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.receita_por_visitante.sobe %}▲{% else %}▼{% endif %} {{ comparacao.receita_por_visitante.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+        {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      </div>
       <div class="spark"><canvas id="spark-receita"></canvas></div>
     </div>
   </div>
@@ -241,7 +305,7 @@
 {% if insights %}
 <section class="insights">
   <div class="insights-cabeca">
-    <div class="secao s-amarelo" style="margin:0"><span class="icone">💡</span></div>
+    <span class="icone">💡</span>
     <div><h2>O que os números dizem</h2><p>Conclusões automáticas do período selecionado</p></div>
   </div>
   <ul>
@@ -331,7 +395,7 @@
 </div>
 <div class="cartao">
   <h2>Entradas e vendas, dia a dia</h2>
-  <p class="nota">Quando as duas linhas se afastam, muita gente entrou e pouca gente comprou.</p>
+  <p class="nota">As duas na mesma escala: o espaço entre o azul e o verde são as pessoas que entraram e não compraram.</p>
   <div class="area-linhas"><canvas id="grafico-linhas"></canvas></div>
 </div>
 <div class="duas">
@@ -510,34 +574,36 @@
 </div>
 <div class="cartao">
   <h2>Abertura e fechamento, dia a dia</h2>
-  <table class="pontas">
-    <tr>
-      <th>Data</th>
-      <th>Horário</th>
-      <th>Abertura
-        <div class="media-periodo">média do período<strong>{{ pontas.media_abertura }}</strong></div>
-      </th>
-      <th>Fechamento
-        <div class="media-periodo">média do período<strong>{{ pontas.media_fechamento }}</strong></div>
-      </th>
-    </tr>
-    {% for linha in pontas.dias %}
+  <div class="rolagem">
+    <table class="pontas">
       <tr>
-        <td>{{ linha.data|date:"d/m" }} <small>{{ linha.dia_semana }}</small></td>
-        <td>{{ linha.horario }}</td>
-        <td>
-          <span class="valor">{{ linha.abertura }}</span>
-          <span class="etiqueta {{ linha.css_abertura }}">{{ linha.leitura_abertura|capfirst }}</span>
-        </td>
-        <td>
-          <span class="valor">{{ linha.fechamento }}</span>
-          <span class="etiqueta {{ linha.css_fechamento }}">{{ linha.leitura_fechamento|capfirst }}</span>
-        </td>
+        <th>Data</th>
+        <th>Horário</th>
+        <th>Abertura
+          <div class="media-periodo">média do período<strong>{{ pontas.media_abertura }}</strong></div>
+        </th>
+        <th>Fechamento
+          <div class="media-periodo">média do período<strong>{{ pontas.media_fechamento }}</strong></div>
+        </th>
       </tr>
-    {% empty %}
-      <tr><td colspan="4">Sem dados no período ou loja sem horário de funcionamento cadastrado.</td></tr>
-    {% endfor %}
-  </table>
+      {% for linha in pontas.dias %}
+        <tr>
+          <td>{{ linha.data|date:"d/m" }} <small>{{ linha.dia_semana }}</small></td>
+          <td>{{ linha.horario }}</td>
+          <td>
+            <span class="valor">{{ linha.abertura }}</span>
+            <span class="etiqueta {{ linha.css_abertura }}">{{ linha.leitura_abertura|capfirst }}</span>
+          </td>
+          <td>
+            <span class="valor">{{ linha.fechamento }}</span>
+            <span class="etiqueta {{ linha.css_fechamento }}">{{ linha.leitura_fechamento|capfirst }}</span>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">Sem dados no período ou loja sem horário de funcionamento cadastrado.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
   <div class="legenda">
     <div>Abaixo de 80% da média do período: <span class="etiqueta fraca">Abaixo do normal</span></div>
     <div>De 80% a 120% da média do período: <span class="etiqueta normal">Normal</span></div>
@@ -584,11 +650,10 @@
   const CORES_DIAS = ["#0a5cff", "#f97316", "#14b8a6", "#22c55e", "#eab308", "#a855f7", "#ec4899"];
 
   // Degrade vertical para areas de grafico de linha.
-  function degrade(canvas, cor, altura) {
-    const contexto = canvas.getContext("2d");
-    const g = contexto.createLinearGradient(0, 0, 0, altura);
-    g.addColorStop(0, cor.replace("1)", ".35)"));
-    g.addColorStop(1, cor.replace("1)", "0)"));
+  function degrade(canvas, rgb, altura, opacidade) {
+    const g = canvas.getContext("2d").createLinearGradient(0, 0, 0, altura);
+    g.addColorStop(0, `rgba(${rgb},${opacidade})`);
+    g.addColorStop(1, `rgba(${rgb},0)`);
     return g;
   }
 
@@ -603,7 +668,7 @@
         labels: valores.map((_, i) => i),
         datasets: [{
           data: valores, borderColor: "rgba(255,255,255,.9)", borderWidth: 2,
-          backgroundColor: degrade(canvas, "rgba(255,255,255,1)", 44),
+          backgroundColor: degrade(canvas, "255,255,255", 44, 0.35),
           fill: true, tension: 0.4, pointRadius: 0, spanGaps: true,
         }],
       },
@@ -619,7 +684,9 @@
   spark("spark-conversao", linhas.conversao);
   spark("spark-receita", linhas.receita);
 
-  // ---------- Grafico de linhas: entradas x vendas ----------
+  // ---------- Grafico de linhas: entradas x vendas na MESMA escala ----------
+  // UM eixo so (nada de eixo da direita): a area verde (vendas) fica DENTRO da
+  // azul (entradas), e o espaco entre elas sao as pessoas que nao compraram.
   (function () {
     const canvas = document.getElementById("grafico-linhas");
     new Chart(canvas, {
@@ -628,15 +695,16 @@
         labels: linhas.rotulos,
         datasets: [
           {
-            label: "Entradas", data: linhas.entradas, yAxisID: "y",
+            label: "Entradas", data: linhas.entradas,
             borderColor: COR_ENTRADAS, borderWidth: 2.5,
-            backgroundColor: degrade(canvas, "rgba(10,92,255,1)", 330),
+            backgroundColor: degrade(canvas, "10,92,255", 330, 0.28),
             fill: true, tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
           },
           {
-            label: "Vendas", data: linhas.vendas, yAxisID: "y2",
-            borderColor: COR_VENDAS, borderWidth: 2.5, backgroundColor: COR_VENDAS,
-            fill: false, tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
+            label: "Vendas", data: linhas.vendas,
+            borderColor: COR_VENDAS, borderWidth: 2.5,
+            backgroundColor: degrade(canvas, "16,185,129", 330, 0.30),
+            fill: true, tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
           },
         ],
       },
@@ -656,9 +724,8 @@
           },
         },
         scales: {
-          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
-          y: { beginAtZero: true, title: { display: true, text: "Entradas" } },
-          y2: { beginAtZero: true, position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "Vendas" } },
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+          y: { beginAtZero: true, title: { display: true, text: "Pessoas / vendas" } },
         },
       },
     });
