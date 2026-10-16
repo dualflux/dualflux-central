@@ -242,7 +242,7 @@
 
       {# Erros gerais: e-mail/senha errados, empresa suspensa, etc. #}
       {% if form.non_field_errors %}
-        <div class="erro" role="alert"><span>⚠️</span><div>{% for erro in form.non_field_errors %}{{ erro }}{% endfor %}</div></div>
+        <div class="erro" role="alert"><img src="{% static 'img/icones/aviso.png' %}" width="22" height="22" alt=""><div>{% for erro in form.non_field_errors %}{{ erro }}{% endfor %}</div></div>
       {% endif %}
 
       <form method="post" id="form-login" novalidate>

@@ -1,5 +1,5 @@
 {# Moldura comum a todas as telas dos clientes. As outras telas "estendem" esta. #}
-{% load static %}
+{% load static icones %}
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -137,6 +137,10 @@
       .conta-texto, .seta { display: none; }
       .menu { width: min(280px, calc(100vw - 28px)); }
     }
+    /* Icones 3D (static/img/icones): alinhados ao texto, iguais em qualquer aparelho. */
+    .ic3d { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+    .hero-meta .ic3d, .data .ic3d { margin-right: 2px; vertical-align: -4px; }
+    .em-breve .ic3d { filter: grayscale(.5); opacity: .75; }
   </style>
 </head>
 <body class="{% if menu_empresa %}com-menu{% endif %}">
@@ -152,7 +156,7 @@
 
       <nav>
         <span class="grupo">Análises</span>
-        <a href="{% url 'empresa_inicio' menu_empresa.slug %}" class="{% if menu_tela == 'empresa_inicio' %}ativo{% endif %}">📊 Visão da rede</a>
+        <a href="{% url 'empresa_inicio' menu_empresa.slug %}" class="{% if menu_tela == 'empresa_inicio' %}ativo{% endif %}">{% icone "grafico-barras" 20 %}Visão da rede</a>
 
         <span class="grupo">Lojas</span>
         {% for loja in menu_lojas %}
@@ -164,10 +168,10 @@
         {% endfor %}
 
         <span class="grupo">Gestão</span>
-        <span class="em-breve">📈 Relatórios <em>em breve</em></span>
-        <span class="em-breve">🔔 Alertas <em>em breve</em></span>
-        <span class="em-breve">👥 Equipe <em>em breve</em></span>
-        <span class="em-breve">⚙️ Configurações <em>em breve</em></span>
+        <span class="em-breve">{% icone "grafico-sobe" 20 %}Relatórios <em>em breve</em></span>
+        <span class="em-breve">{% icone "sino" 20 %}Alertas <em>em breve</em></span>
+        <span class="em-breve">{% icone "pessoas" 20 %}Equipe <em>em breve</em></span>
+        <span class="em-breve">{% icone "engrenagem" 20 %}Configurações <em>em breve</em></span>
       </nav>
 
       <div class="lateral-rodape">DualFlux &middot; fluxo e conversão</div>
@@ -201,10 +205,10 @@
               {{ user.email }}
             </div>
             {% if user.empresa %}
-              <a href="{% url 'empresa_inicio' user.empresa.slug %}">🏪 Minhas lojas</a>
+              <a href="{% url 'empresa_inicio' user.empresa.slug %}">{% icone "loja" 18 %}Minhas lojas</a>
             {% endif %}
             {% if user.is_staff %}
-              <a href="{% url 'admin:index' %}">⚙️ Administração DualFlux</a>
+              <a href="{% url 'admin:index' %}">{% icone "engrenagem" 18 %}Administração DualFlux</a>
             {% endif %}
             {# Sair e feito por POST (formulario), nao por link: assim um link malicioso #}
             {# em outro site nao consegue deslogar o usuario sem ele clicar. #}

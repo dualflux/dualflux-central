@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 {% block titulo %}{{ empresa.nome }} - Visão da rede - DualFlux{% endblock %}
 
 {% block conteudo %}
@@ -67,7 +68,7 @@
   .insights-cabeca p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .9rem; }
   .insights ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 16px 0 0; }
   .insight { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid #eef2f7; background: #f8fafc; }
-  .insight .ins-icone { font-size: 1.35rem; line-height: 1.2; }
+  .insight .ins-icone { display: flex; flex-shrink: 0; font-size: 1.35rem; line-height: 1.2; }
   .insight p { margin: 0; color: #1e293b; line-height: 1.5; font-size: .95rem; }
   .insight.alerta { background: #fff5f5; border-color: #fee2e2; }
   .insight.pico { background: #fff7ed; border-color: #ffedd5; }
@@ -174,7 +175,7 @@
     <div>
       <span class="hero-rotulo">Visão da rede</span>
       <h1>{{ empresa.nome }}</h1>
-      <p class="hero-meta">🏪 {{ total_lojas }} loja{{ total_lojas|pluralize }}</p>
+      <p class="hero-meta">{% icone "loja" 18 %} {{ total_lojas }} loja{{ total_lojas|pluralize }}</p>
     </div>
     {% if total_lojas %}
       <div class="status {% if lojas_online == total_lojas %}online{% elif lojas_online %}parcial{% else %}offline{% endif %}">
@@ -187,7 +188,7 @@
   </div>
 
   <div class="hero-periodo">
-    <span class="data">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span>
+    <span class="data">{% icone "calendario" 18 %} {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span>
     <nav class="seletor">
       {% for periodo in periodos %}
         <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
@@ -241,12 +242,12 @@
 {% if insights %}
 <section class="insights">
   <div class="insights-cabeca">
-    <span class="icone">💡</span>
+    <span class="icone">{% icone "lampada" 30 %}</span>
     <div><h2>O que os números dizem</h2><p>Comparação automática entre as lojas no período</p></div>
   </div>
   <ul>
     {% for insight in insights %}
-      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{{ insight.icone }}</span><p>{{ insight.texto }}</p></li>
+      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{{ insight.icone|icone_emoji }}</span><p>{{ insight.texto }}</p></li>
     {% endfor %}
   </ul>
 </section>
@@ -254,7 +255,7 @@
 
 {# ======================= LOJAS DA REDE ======================= #}
 <div class="secao s-azul">
-  <span class="icone">🏪</span>
+  <span class="icone">{% icone "rede" 30 %}</span>
   <div><h2>Lojas da rede</h2><p>Cada loja com os mesmos números, lado a lado</p></div>
 </div>
 <div class="grade-lojas">
@@ -303,7 +304,7 @@
 {# ======================= COMPARATIVO ======================= #}
 {% if total_lojas %}
 <div class="secao s-laranja">
-  <span class="icone">📊</span>
+  <span class="icone">{% icone "grafico-barras" 30 %}</span>
   <div><h2>Comparativo entre lojas</h2><p>Ranking pela conversão e a evolução da rede</p></div>
 </div>
 
