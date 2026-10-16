@@ -165,3 +165,6 @@ LOGOUT_REDIRECT_URL = "login"
 
 # Numeros no padrao brasileiro nas telas: 2.911 e 14,2
 USE_THOUSAND_SEPARATOR = True
+
+# Pasta das imagens e arquivos da marca (logo, icones).
+STATICFILES_DIRS = [BASE_DIR / "static"]

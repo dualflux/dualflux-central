@@ -3,87 +3,320 @@
 
 {% block conteudo %}
 <style>
-  /* Esta tela usa mais largura que as outras: os trios precisam de espaço. */
-  main { max-width: 1100px; }
-  .trilha a { color: #2a5d8f; }
-  .periodos { margin: 12px 0 20px; }
-  .periodos a { display: inline-block; margin: 0 6px 6px 0; padding: 6px 12px; border-radius: 6px;
-                background: #fff; color: #12355b; text-decoration: none; border: 1px solid #cbd2d9; }
-  .periodos a.ativo { background: #12355b; color: #fff; border-color: #12355b; }
+  /* ---------- Base da tela ---------- */
+  main { max-width: 1180px; }
+  :root {
+    --entradas: #0a5cff;   /* azul DualFlux = pessoas que entraram */
+    --vendas: #10b981;     /* verde = vendas, dinheiro */
+    --pico: #f97316;       /* laranja = pico, destaque de decisao */
+  }
   .cartao { margin-bottom: 16px; }
-  .cartao h2 { margin-top: 0; font-size: 1.1rem; }
-  h2.secao { font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; color: #616e7c; margin: 28px 0 10px; }
+  /* Titulo dentro das caixas: cabecalho de widget, com bolinha e linha separadora. */
+  .cartao h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding-bottom: 10px;
+               font-size: 1.02rem; font-weight: 700; color: var(--texto); border-bottom: 1px solid var(--borda); }
+  .cartao h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--marca-azul); flex-shrink: 0; }
+  .cartao h2 + .nota { margin: -4px 0 14px; font-size: .9rem; font-weight: 500; color: var(--texto-apoio); }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .duas .cartao { margin: 0; }
 
-  /* Resumo do período */
-  .resumo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
-  .resumo .cartao { margin: 0; padding: 16px; }
-  .resumo span { display: block; color: #616e7c; font-size: .85rem; }
-  .resumo strong { font-size: 1.6rem; }
-  .resumo .principal { background: #12355b; }
-  .resumo .principal span, .resumo .principal strong { color: #fff; }
+  /* ---------- Cabecalho vitrine (hero) ---------- */
+  .hero { position: relative; overflow: hidden; color: #fff; border-radius: 22px; padding: 28px 30px;
+          background:
+            radial-gradient(900px 380px at 90% -20%, rgba(10, 92, 255, .55), transparent 60%),
+            radial-gradient(600px 300px at -10% 120%, rgba(10, 92, 255, .25), transparent 60%),
+            linear-gradient(135deg, #14161a 0%, #1d2230 100%);
+          box-shadow: 0 24px 48px rgba(15, 23, 42, .22); }
+  .hero-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .hero-trilha { color: #9db8ff; text-decoration: none; font-size: .9rem; font-weight: 600; }
+  .hero h1 { margin: 4px 0 6px; font-size: 2.3rem; font-weight: 800; letter-spacing: -.02em; }
+  .hero-meta { margin: 0; color: #cbd5e1; font-size: .95rem; }
+  .status { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px;
+            background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); font-weight: 700; }
+  .status small { display: block; font-weight: 500; font-size: .78rem; color: #cbd5e1; }
+  .status .ponto { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status.online .ponto { background: #22c55e; box-shadow: 0 0 0 5px rgba(34, 197, 94, .22); }
+  .status.offline .ponto { background: #ef4444; box-shadow: 0 0 0 5px rgba(239, 68, 68, .22); }
+  .status.semdados .ponto { background: #94a3b8; }
+  .hero-periodo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+  .hero-periodo .data { color: #e2e8f0; font-weight: 600; }
+  .seletor { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08); }
+  .seletor a { padding: 7px 15px; border-radius: 999px; color: #e2e8f0; text-decoration: none; font-weight: 600; font-size: .88rem; }
+  .seletor a.ativo { background: #fff; color: #14161a; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 22px; }
+  .kpi { padding: 16px 18px; border-radius: 16px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
+  .kpi.principal { background: linear-gradient(135deg, rgba(10, 92, 255, .65), rgba(10, 92, 255, .25)); border-color: rgba(140, 175, 255, .55); }
+  .kpi-nome { color: #cbd5e1; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+  .kpi strong { display: block; margin: 6px 0 8px; font-size: 2.05rem; font-weight: 800; letter-spacing: -.02em; }
+  .delta { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+  .delta.sobe { background: rgba(34, 197, 94, .2); color: #86efac; }
+  .delta.cai { background: rgba(239, 68, 68, .2); color: #fca5a5; }
+  .delta.neutro { background: rgba(255, 255, 255, .08); color: #cbd5e1; font-weight: 600; }
+  .kpi small { margin-left: 6px; color: #94a3b8; font-size: .75rem; }
+  .spark { position: relative; height: 44px; margin-top: 10px; }
 
-  /* Trios: gráfico | conversão | gráfico */
-  .trio { display: grid; grid-template-columns: 1fr 290px 1fr; gap: 12px; }
-  .trio .cartao { margin: 0; }
+  /* ---------- O que os numeros dizem ---------- */
+  .insights { position: relative; margin: 22px 0 8px; padding: 22px 24px 22px 28px; border-radius: 18px; background: #fff;
+              border: 1px solid var(--borda); box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .05); }
+  .insights::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 5px; border-radius: 0 5px 5px 0;
+                      background: linear-gradient(180deg, var(--entradas), var(--vendas)); }
+  .insights-cabeca { display: flex; align-items: center; gap: 12px; }
+  .insights-cabeca h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
+  .insights-cabeca p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .9rem; }
+  .insights ul { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; list-style: none; padding: 0; margin: 16px 0 0; }
+  .insight { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid #eef2f7; background: #f8fafc; }
+  .insight .ins-icone { font-size: 1.35rem; line-height: 1.2; }
+  .insight p { margin: 0; color: #1e293b; line-height: 1.5; font-size: .95rem; }
+  .insight.alerta { background: #fff5f5; border-color: #fee2e2; }
+  .insight.pico { background: #fff7ed; border-color: #ffedd5; }
+  .insight.info { background: #eff6ff; border-color: #dbeafe; }
+  .insight.tendencia { background: #f0fdf4; border-color: #dcfce7; }
+
+  /* ---------- Cabecalho de secao: claro, com icone colorido ---------- */
+  .secao { display: flex; align-items: center; gap: 14px; margin: 44px 0 16px; }
+  .secao::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #d5dce6, transparent); }
+  .secao .icone { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                  width: 46px; height: 46px; border-radius: 13px; font-size: 1.35rem; }
+  .secao h2 { margin: 0; font-size: 1.28rem; font-weight: 800; letter-spacing: -.01em; color: var(--texto); }
+  .secao p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .92rem; }
+  .s-azul .icone { background: #e8f0ff; }
+  .s-verde .icone { background: #e7f8f1; }
+  .s-laranja .icone { background: #fff1e6; }
+  .s-roxo .icone { background: #f3e8ff; }
+  .s-amarelo .icone { background: #fef9c3; }
+  .s-grafite .icone { background: #eef0f3; }
+
+  /* ---------- Quadros de movimento e vendas ---------- */
+  .quadros { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 12px; }
+  .quadros .cartao { margin: 0; padding: 18px; }
+  .quadros .titulo { display: block; color: var(--texto-apoio); font-size: .88rem; font-weight: 600; }
+  .quadros strong { display: block; margin: 6px 0 4px; font-size: 1.65rem; font-weight: 800; letter-spacing: -.01em; color: var(--texto); }
+  .quadros .apoio { display: block; color: var(--texto-apoio); font-size: .84rem; }
+  .quadros .principal { background: linear-gradient(135deg, #0a5cff, #3b82f6); border-color: transparent; }
+  .quadros .principal .titulo, .quadros .principal strong, .quadros .principal .apoio { color: #fff; }
+  .explica { margin: 12px 0 0; font-size: .82rem; color: var(--texto-apoio); line-height: 1.5; }
+
+  /* ---------- Graficos ---------- */
+  .area-linhas { position: relative; height: 330px; }
+  .area-barras { position: relative; height: 260px; }
   .area-grafico { position: relative; height: 300px; }
+
+  /* ---------- Mapa de horarios ---------- */
+  .mapa-area { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+  .mapa-area > .cartao { margin: 0; }
+  .rolagem { overflow-x: auto; }
+  table.grade { border-collapse: separate; border-spacing: 4px; width: 100%; }
+  table.grade th, table.grade td { padding: 6px 4px; text-align: center; font-size: .85rem; }
+  table.grade th { color: var(--texto-apoio); font-weight: 600; }
+  td.celula { border-radius: 7px; font-weight: 700; min-width: 44px; }
+  .vazio { background: #f1f3f5; color: #868e96; }
+  .baixo { background: #fff3bf; color: #5c4a00; }
+  .moderado { background: #ffe08a; color: #5c4a00; }
+  .alto { background: #ffc078; color: #5c2b00; }
+  .muito-alto { background: #f76707; color: #fff; }
+  .pico { background: #c92a2a; color: #fff; }
+  .item-legenda { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .item-legenda .nome-faixa { color: var(--texto-apoio); }
+  .amostra { display: inline-block; width: 28px; height: 22px; border-radius: 6px; flex-shrink: 0; }
+  .destaque { margin: 0 0 12px; padding: 10px 12px; background: #f8fafc; border-radius: 10px; border-left: 4px solid #e4e7eb; }
+  .destaque .rotulo { display: block; margin-bottom: 4px; color: var(--texto-apoio); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .destaque strong { display: block; margin-bottom: 3px; font-size: 1.02rem; }
+  .destaque .apoio { display: block; color: var(--texto-apoio); font-size: .88rem; line-height: 1.4; }
+  .destaque.d-pico { border-color: #c92a2a; }
+  .destaque.d-alto { border-color: #f76707; }
+  .destaque.d-bloco { border-color: var(--vendas); }
+  .destaque.d-aviso { border-color: #f59f00; }
+
+  /* ---------- Trios: grafico | conversao | grafico ---------- */
+  .trio { display: grid; grid-template-columns: 1fr 300px 1fr; gap: 16px; }
+  .trio .cartao { margin: 0; }
   .conversao { display: flex; flex-direction: column; justify-content: center; }
-  .linha-conv { display: flex; justify-content: space-between; align-items: center; gap: 8px;
-                padding: 8px 4px; border-bottom: 1px solid #e4e7eb; }
-  .linha-conv small { display: block; color: #3e4c59; font-size: .88rem; margin-top: 3px; white-space: nowrap; }
-  .linha-conv .taxa { font-size: 1.3rem; white-space: nowrap; }
-  .linha-conv.maior .taxa { color: #03543f; }
-  .linha-conv.menor .taxa { color: #9b1c1c; }
+  .linha-conv { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 4px; border-bottom: 1px solid var(--borda); }
+  .linha-conv small { display: block; color: var(--texto-apoio); font-size: .86rem; margin-top: 3px; white-space: nowrap; }
+  .linha-conv .taxa { font-size: 1.3rem; font-weight: 800; white-space: nowrap; }
+  .linha-conv.maior .taxa { color: #059669; }
+  .linha-conv.menor .taxa { color: #dc2626; }
   .compacta .linha-conv { padding: 5px 4px; }
   .compacta .linha-conv .taxa { font-size: 1.05rem; }
-  .explica { margin: 12px 0 0; font-size: .78rem; color: #616e7c; line-height: 1.45; }
-  .cores { font-size: .85rem; color: #3e4c59; margin-top: 8px; }
+  .cores { font-size: .85rem; color: var(--texto-apoio); margin-top: 10px; }
   .bolinha { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; }
 
-  /* Tabela de abertura e fechamento */
-  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e4e7eb; vertical-align: middle; }
-  .media-periodo { margin-top: 6px; padding: 6px 10px; border-radius: 6px; background: #e8eef5;
-                   border-left: 4px solid #12355b; font-weight: normal; color: #3e4c59; font-size: .8rem; }
-  .media-periodo strong { display: block; font-size: 1.4rem; color: #12355b; }
-  .valor { font-size: 1.05rem; font-weight: 600; margin-right: 6px; }
-  .etiqueta { padding: 2px 8px; border-radius: 10px; font-size: .8rem; white-space: nowrap; }
-  .etiqueta.fraca { background: #fde8e8; color: #9b1c1c; }
-  .etiqueta.normal { background: #e4e7eb; color: #3e4c59; }
-  .etiqueta.forte { background: #def7ec; color: #03543f; }
-  .legenda { margin-top: 10px; font-size: .9rem; color: #3e4c59; }
-  .legenda div { margin: 4px 0; }
+  /* ---------- Abertura e fechamento ---------- */
+  table.pontas { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  table.pontas th, table.pontas td { text-align: left; padding: 10px 6px; border-bottom: 1px solid var(--borda); vertical-align: middle; }
+  .media-periodo { margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: #eef4ff;
+                   border-left: 4px solid var(--marca-azul); font-weight: 500; color: var(--texto-apoio); font-size: .8rem; }
+  .media-periodo strong { display: block; font-size: 1.4rem; color: var(--marca-azul); }
+  .valor { font-size: 1.05rem; font-weight: 700; margin-right: 6px; }
+  .etiqueta { padding: 3px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; white-space: nowrap; }
+  .etiqueta.fraca { background: #fee2e2; color: #b91c1c; }
+  .etiqueta.normal { background: #eef0f3; color: #475569; }
+  .etiqueta.forte { background: #dcfce7; color: #047857; }
+  .legenda { margin-top: 12px; font-size: .9rem; color: var(--texto-apoio); }
+  .legenda div { margin: 5px 0; }
 
-  /* Celular: tudo empilhado */
-  @media (max-width: 800px) {
-    .resumo { grid-template-columns: 1fr 1fr; }
-    .trio { grid-template-columns: 1fr; }
+  /* ---------- Celular ---------- */
+  @media (max-width: 900px) {
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .insights ul, .duas, .trio, .mapa-area { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.8rem; }
   }
 </style>
 
-<p class="sub trilha"><a href="{% url 'empresa_inicio' empresa.slug %}">{{ empresa.nome }}</a> &rsaquo; {{ loja.nome }}</p>
-<h1>{{ loja.nome }}</h1>
-<p class="sub">De {{ data_inicial|date:"d/m/Y" }} a {{ data_final|date:"d/m/Y" }}</p>
-
-{# Botões de período: cada um recarrega a página com ?dias=N #}
-<nav class="periodos">
-  {% for periodo in periodos %}
-    <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
-  {% endfor %}
-</nav>
-
-{# ================= RESUMO DO PERÍODO ================= #}
-<h2 class="secao">Métricas do período</h2>
-<div class="resumo">
-  <div class="cartao"><span>Entradas</span><strong>{{ resumo.entradas }}</strong></div>
-  <div class="cartao"><span>Média de entradas por dia</span><strong>{{ media_diaria }}</strong></div>
-  <div class="cartao"><span>Vendas</span><strong>{{ resumo.vendas }}</strong></div>
-  <div class="cartao principal">
-    <span>Taxa de conversão</span>
-    <strong>{% if resumo.conversao is not None %}{{ resumo.conversao|floatformat:1 }}%{% else %}sem dados{% endif %}</strong>
+{# ======================= CABECALHO VITRINE ======================= #}
+<section class="hero">
+  <div class="hero-topo">
+    <div>
+      <a class="hero-trilha" href="{% url 'empresa_inicio' empresa.slug %}">{{ empresa.nome }} &rsaquo;</a>
+      <h1>{{ loja.nome }}</h1>
+      <p class="hero-meta">
+        {% if loja.cidade %}📍 {{ loja.cidade }}{% if loja.uf %}/{{ loja.uf }}{% endif %} &nbsp;·&nbsp; {% endif %}
+        🕘 Hoje: {% if horario_hoje %}{{ horario_hoje.abre|time:"H:i" }}–{{ horario_hoje.fecha|time:"H:i" }}{% else %}fechada{% endif %}
+      </p>
+    </div>
+    {# Status ao vivo, vindo do heartbeat do servidor da loja. #}
+    {% if status %}
+      {% if status.online %}
+        <div class="status online"><span class="ponto"></span>
+          <span>Online<small>{% if status.cameras_ok %}câmeras funcionando{% else %}verificar câmera{% endif %}</small></span>
+        </div>
+      {% else %}
+        <div class="status offline"><span class="ponto"></span>
+          <span>Offline<small>último sinal há {{ status.ultimo_heartbeat|timesince }}</small></span>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="status semdados"><span class="ponto"></span>
+        <span>Aguardando conexão<small>servidor da loja ainda não enviou sinal</small></span>
+      </div>
+    {% endif %}
   </div>
-  <div class="cartao"><span>Faturamento</span><strong>R$ {{ resumo.faturamento|floatformat:"2g" }}</strong></div>
-  <div class="cartao"><span>Ticket médio</span><strong>{% if resumo.ticket_medio is not None %}R$ {{ resumo.ticket_medio|floatformat:"2g" }}{% else %}sem dados{% endif %}</strong></div>
-  <div class="cartao"><span>Receita por visitante</span><strong>{% if resumo.receita_por_visitante is not None %}R$ {{ resumo.receita_por_visitante|floatformat:"2g" }}{% else %}sem dados{% endif %}</strong></div>
+
+  <div class="hero-periodo">
+    <span class="data">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span>
+    <nav class="seletor">
+      {% for periodo in periodos %}
+        <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  {# Os 4 numeros que vendem, com tendencia e minigrafico. #}
+  <div class="kpis">
+    <div class="kpi">
+      <span class="kpi-nome">Entradas</span>
+      <strong>{{ resumo.entradas }}</strong>
+      {% if comparacao and comparacao.entradas %}
+        <span class="delta {% if comparacao.entradas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.entradas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.entradas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="spark"><canvas id="spark-entradas"></canvas></div>
+    </div>
+    <div class="kpi">
+      <span class="kpi-nome">Vendas</span>
+      <strong>{{ resumo.vendas }}</strong>
+      {% if comparacao and comparacao.vendas %}
+        <span class="delta {% if comparacao.vendas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.vendas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.vendas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="spark"><canvas id="spark-vendas"></canvas></div>
+    </div>
+    <div class="kpi principal">
+      <span class="kpi-nome">Conversão</span>
+      <strong>{% if resumo.conversao is not None %}{{ resumo.conversao|floatformat:1 }}%{% else %}–{% endif %}</strong>
+      {% if comparacao and comparacao.conversao %}
+        <span class="delta {% if comparacao.conversao.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.conversao.sobe %}▲{% else %}▼{% endif %} {{ comparacao.conversao.valor|floatformat:1 }} p.p.</span><small>vs. {{ dias }} dias anteriores</small>
+      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="spark"><canvas id="spark-conversao"></canvas></div>
+    </div>
+    <div class="kpi">
+      <span class="kpi-nome">Receita por visitante</span>
+      <strong>{% if resumo.receita_por_visitante is not None %}R$ {{ resumo.receita_por_visitante|floatformat:"2g" }}{% else %}–{% endif %}</strong>
+      {% if comparacao and comparacao.receita_por_visitante %}
+        <span class="delta {% if comparacao.receita_por_visitante.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.receita_por_visitante.sobe %}▲{% else %}▼{% endif %} {{ comparacao.receita_por_visitante.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+      {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      <div class="spark"><canvas id="spark-receita"></canvas></div>
+    </div>
+  </div>
+</section>
+
+{# ======================= O QUE OS NUMEROS DIZEM ======================= #}
+{% if insights %}
+<section class="insights">
+  <div class="insights-cabeca">
+    <div class="secao s-amarelo" style="margin:0"><span class="icone">💡</span></div>
+    <div><h2>O que os números dizem</h2><p>Conclusões automáticas do período selecionado</p></div>
+  </div>
+  <ul>
+    {% for insight in insights %}
+      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{{ insight.icone }}</span><p>{{ insight.texto }}</p></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{# ======================= MOVIMENTO ======================= #}
+<div class="secao s-azul">
+  <span class="icone">👥</span>
+  <div><h2>Movimento</h2><p>Quantas pessoas entraram e quando</p></div>
+</div>
+{% with d=mapa.destaques %}
+<div class="quadros">
+  <div class="cartao">
+    <span class="titulo">Entradas no período</span>
+    <strong>{{ resumo.entradas }}</strong>
+    <span class="apoio">{{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m" }}</span>
+  </div>
+  <div class="cartao">
+    <span class="titulo">Média de entradas por dia</span>
+    <strong>{{ media_diaria }}</strong>
+    <span class="apoio">pessoas por dia</span>
+  </div>
+  <div class="cartao">
+    <span class="titulo">Hora mais movimentada</span>
+    {% if d.hora_pico %}
+      <strong>{{ d.hora_pico.0 }}h às {{ d.hora_pico.1 }}h</strong>
+      <span class="apoio">{{ d.hora_pico.2 }} entradas por dia, em média</span>
+    {% else %}<strong>sem dados</strong>{% endif %}
+  </div>
+  <div class="cartao">
+    <span class="titulo">Dia mais movimentado</span>
+    {% if d.dia_maior %}
+      <strong>{{ d.dia_maior.0 }}</strong>
+      <span class="apoio">{{ d.dia_maior.1 }} entradas{% if not mapa.por_data %} por dia, em média{% endif %}</span>
+    {% else %}<strong>sem dados</strong>{% endif %}
+  </div>
+</div>
+{% endwith %}
+
+{# ======================= VENDAS ======================= #}
+<div class="secao s-verde">
+  <span class="icone">💰</span>
+  <div><h2>Vendas</h2><p>O que o movimento virou em vendas</p></div>
+</div>
+<div class="quadros">
+  <div class="cartao">
+    <span class="titulo">Vendas</span>
+    <strong>{{ resumo.vendas }}</strong>
+    <span class="apoio">no período</span>
+  </div>
+  <div class="cartao principal">
+    <span class="titulo">Taxa de conversão</span>
+    <strong>{% if resumo.conversao is not None %}{{ resumo.conversao|floatformat:1 }}%{% else %}sem dados{% endif %}</strong>
+    <span class="apoio">de cada 100 que entraram, compraram</span>
+  </div>
+  <div class="cartao">
+    <span class="titulo">Faturamento</span>
+    <strong>R$ {{ resumo.faturamento|floatformat:"2g" }}</strong>
+    <span class="apoio">no período</span>
+  </div>
+  <div class="cartao">
+    <span class="titulo">Ticket médio</span>
+    <strong>{% if resumo.ticket_medio is not None %}R$ {{ resumo.ticket_medio|floatformat:"2g" }}{% else %}sem dados{% endif %}</strong>
+    <span class="apoio">valor médio de cada venda</span>
+  </div>
+  <div class="cartao">
+    <span class="titulo">Receita por visitante</span>
+    <strong>{% if resumo.receita_por_visitante is not None %}R$ {{ resumo.receita_por_visitante|floatformat:"2g" }}{% else %}sem dados{% endif %}</strong>
+    <span class="apoio">quanto cada pessoa que entrou rendeu</span>
+  </div>
 </div>
 <p class="explica">
   <strong>Conversão</strong> = vendas &divide; entradas (de cada 100 pessoas que entraram, quantas compraram).
@@ -91,21 +324,116 @@
   <strong>Receita por visitante</strong> = faturamento &divide; entradas (quanto cada pessoa que entrou rendeu, em média).
 </p>
 
-{# ================= FLUXO ================= #}
-<h2 class="secao">Fluxo de pessoas</h2>
-<div class="cartao">
-  <h2>Entradas por dia</h2>
-  <canvas id="grafico-dias" height="90"></canvas>
+{# ======================= FLUXO ======================= #}
+<div class="secao s-azul">
+  <span class="icone">📈</span>
+  <div><h2>Fluxo de pessoas</h2><p>Entradas e vendas dia a dia e ao longo do dia</p></div>
 </div>
 <div class="cartao">
-  <h2>Quando a loja enche</h2>
-  <p class="nota">Média de entradas em cada hora do dia, no período.</p>
-  <canvas id="grafico-horas" height="90"></canvas>
+  <h2>Entradas e vendas, dia a dia</h2>
+  <p class="nota">Quando as duas linhas se afastam, muita gente entrou e pouca gente comprou.</p>
+  <div class="area-linhas"><canvas id="grafico-linhas"></canvas></div>
+</div>
+<div class="duas">
+  <div class="cartao">
+    <h2>Entradas por dia</h2>
+    <p class="nota">Em laranja, o dia de maior movimento.</p>
+    <div class="area-barras"><canvas id="grafico-dias"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h2>Quando a loja enche</h2>
+    <p class="nota">Média de entradas em cada hora. Em laranja, a hora de pico.</p>
+    <div class="area-barras"><canvas id="grafico-horas"></canvas></div>
+  </div>
 </div>
 
-{# ================= TRIO DOS TURNOS ================= #}
-<h2 class="secao">Entradas x vendas por turno</h2>
-<p class="nota">Manhã até 12h, tarde de 12h às 18h, noite depois das 18h.</p>
+{# ======================= MAPA DE HORARIOS ======================= #}
+<div class="secao s-laranja">
+  <span class="icone">🗓️</span>
+  <div><h2>Mapa de horários</h2><p>Os horários de pico de cada dia</p></div>
+</div>
+<div class="mapa-area">
+  <div class="cartao">
+    <h2>Entradas por hora e dia</h2>
+    <p class="nota">
+      {% if mapa.por_data %}Total de entradas em cada hora de cada dia.
+      {% else %}Média de entradas em cada hora, por dia da semana.{% endif %}
+    </p>
+    <div class="rolagem">
+      <table class="grade">
+        <tr>
+          <th>Horário</th>
+          {% for rotulo in mapa.rotulos %}<th>{{ rotulo }}</th>{% endfor %}
+        </tr>
+        {% for linha in mapa.linhas %}
+          <tr>
+            <th>{{ linha.hora }}h</th>
+            {% for celula in linha.celulas %}
+              <td class="celula {{ celula.faixa }}">{{ celula.valor }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="cartao">
+      <h2>Legenda das cores</h2>
+      {% for item in mapa.legenda %}
+        <div class="item-legenda">
+          <span class="amostra {{ item.faixa }}"></span>
+          <span>
+            {% if item.faixa == "vazio" %}<strong>Sem movimento</strong>
+            {% elif item.ate is not None %}<strong>até {{ item.ate }}</strong> <span class="nome-faixa">&middot; {{ item.nome }}</span>
+            {% else %}<strong>acima de {{ item.acima }}</strong> <span class="nome-faixa">&middot; {{ item.nome }}</span>{% endif %}
+          </span>
+        </div>
+      {% endfor %}
+      <p class="explica">Faixas calculadas para esta loja, no período escolhido.</p>
+    </div>
+
+    <div class="cartao">
+      <h2>Destaques do período</h2>
+      {% with d=mapa.destaques %}
+        {% if d.maior %}
+          <div class="destaque d-pico">
+            <span class="rotulo">Maior movimento</span>
+            <strong>{{ d.maior.1 }}, das {{ d.maior.2 }}h às {{ d.maior.2|add:1 }}h</strong>
+            <span class="apoio">{{ d.maior.0 }} entradas{% if not mapa.por_data %} em média{% endif %}</span>
+          </div>
+        {% endif %}
+        {% if d.segundo %}
+          <div class="destaque d-alto">
+            <span class="rotulo">2º maior movimento</span>
+            <strong>{{ d.segundo.1 }}, das {{ d.segundo.2 }}h às {{ d.segundo.2|add:1 }}h</strong>
+            <span class="apoio">{{ d.segundo.0 }} entradas{% if not mapa.por_data %} em média{% endif %}</span>
+          </div>
+        {% endif %}
+        {% if d.bloco %}
+          <div class="destaque d-bloco">
+            <span class="rotulo">Período mais movimentado</span>
+            <strong>Das {{ d.bloco.0 }}h às {{ d.bloco.1 }}h</strong>
+            <span class="apoio">{{ d.bloco.2 }}% das entradas do dia acontecem nesse intervalo</span>
+          </div>
+        {% endif %}
+        {% if d.fora_do_horario %}
+          <div class="destaque d-aviso">
+            <span class="rotulo">Fora do horário de funcionamento</span>
+            <strong>{{ d.fora_do_horario }} entradas</strong>
+            <span class="apoio">reposição, limpeza ou algo a verificar</span>
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+</div>
+
+{# ======================= TRIO DOS TURNOS ======================= #}
+<div class="secao s-roxo">
+  <span class="icone">🌗</span>
+  <div><h2>Entradas x vendas por turno</h2><p>Em que turno o movimento vira venda. Manhã até 12h, tarde de 12h às 18h, noite depois das 18h.</p></div>
+</div>
 <div class="trio">
   <div class="cartao">
     <h2>Entradas</h2>
@@ -117,7 +445,6 @@
       <div class="linha-conv {{ ind.destaque }}">
         <span>
           <strong>{{ grupo }}</strong>
-          {# A conta inteira: quantos entraram e quantos compraram neste turno. #}
           <small>{{ ind.entradas }} entraram</small>
           <small>{{ ind.vendas }} compraram</small>
           <small>Ticket médio: R$ {{ ind.ticket_medio|floatformat:"2g"|default:"-" }}</small>
@@ -139,13 +466,16 @@
   </div>
 </div>
 <p class="cores">
-  Cores das roscas:<span class="bolinha" style="background:#4e79a7"></span>maior
-  <span class="bolinha" style="background:#f28e2b"></span>intermediário
-  <span class="bolinha" style="background:#e15759"></span>menor
+  Cores das roscas:<span class="bolinha" style="background:#0a5cff"></span>maior
+  <span class="bolinha" style="background:#f97316"></span>intermediário
+  <span class="bolinha" style="background:#ef4444"></span>menor
 </p>
 
-{# ================= TRIO DOS DIAS DA SEMANA ================= #}
-<h2 class="secao">Entradas x vendas por dia da semana</h2>
+{# ======================= TRIO DOS DIAS DA SEMANA ======================= #}
+<div class="secao s-azul">
+  <span class="icone">📅</span>
+  <div><h2>Entradas x vendas por dia da semana</h2><p>Qual dia converte melhor</p></div>
+</div>
 <div class="trio">
   <div class="cartao">
     <h2>Entradas</h2>
@@ -159,7 +489,6 @@
           <strong>{{ grupo }}</strong>
           <small>{{ ind.entradas }} entraram</small>
           <small>{{ ind.vendas }} compraram</small>
-
         </span>
         <strong class="taxa">
           {% if ind.destaque == "maior" %}&#9650;{% elif ind.destaque == "menor" %}&#9660;{% endif %}
@@ -174,11 +503,14 @@
   </div>
 </div>
 
-{# ================= ABERTURA E FECHAMENTO ================= #}
-<h2 class="secao">Abertura e fechamento</h2>
+{# ======================= ABERTURA E FECHAMENTO ======================= #}
+<div class="secao s-grafite">
+  <span class="icone">⏰</span>
+  <div><h2>Abertura e fechamento</h2><p>Vale abrir mais cedo ou fechar mais tarde?</p></div>
+</div>
 <div class="cartao">
   <h2>Abertura e fechamento, dia a dia</h2>
-  <table>
+  <table class="pontas">
     <tr>
       <th>Data</th>
       <th>Horário</th>
@@ -213,7 +545,8 @@
   </div>
 </div>
 
-{# json_script: entrega os números ao JavaScript de forma segura. #}
+{# json_script: entrega os numeros ao JavaScript de forma segura. #}
+{{ grafico_linhas|json_script:"dados-linhas" }}
 {{ grafico_dias|json_script:"dados-dias" }}
 {{ grafico_horas|json_script:"dados-horas" }}
 {{ grafico_turnos_entradas|json_script:"dados-turnos-entradas" }}
@@ -222,9 +555,14 @@
 {{ grafico_semana_vendas|json_script:"dados-semana-vendas" }}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-{# Complemento oficial que escreve os valores DENTRO dos gráficos. #}
+{# Complemento oficial que escreve os valores DENTRO dos graficos. #}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
+  // ---------- Configuracao comum ----------
+  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.color = "#64748b";
+  Chart.defaults.borderColor = "#eef2f7";
+
   const ler = (id) => JSON.parse(document.getElementById(id).textContent);
   const br = (numero) => numero.toLocaleString("pt-BR");
   const percentual = (valor, lista) => {
@@ -232,48 +570,144 @@
     return total ? Math.round(valor / total * 100) : 0;
   };
 
-  // Cor pela POSIÇÃO do valor: maior = azul, menor = vermelho, demais = laranja.
-  const AZUL = "#4e79a7", LARANJA = "#f28e2b", VERMELHO = "#e15759";
+  // Papeis de cor: azul DualFlux = entradas, verde = vendas, laranja = pico.
+  const COR_ENTRADAS = "#0a5cff", COR_VENDAS = "#10b981", COR_PICO = "#f97316";
+  const COR_ENTRADAS_SUAVE = "#8fb3ff";
+
+  // Roscas: cor pela POSICAO do valor (maior = azul, menor = vermelho, demais = laranja).
+  const AZUL = "#0a5cff", LARANJA = "#f97316", VERMELHO = "#ef4444";
   const coresPorPosicao = (valores) => {
     const maior = Math.max(...valores), menor = Math.min(...valores);
     return valores.map((v) => (v === maior ? AZUL : v === menor ? VERMELHO : LARANJA));
   };
-  // Uma cor bem distinta para cada dia da semana.
-  const CORES_DIAS = ["#4e79a7", "#f28e2b", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7"];
+  // Barras dos dias da semana: uma cor bem distinta para cada dia.
+  const CORES_DIAS = ["#0a5cff", "#f97316", "#14b8a6", "#22c55e", "#eab308", "#a855f7", "#ec4899"];
 
-  // --- Barras simples do fluxo ---
-  const opcoesBarras = {
-    plugins: { legend: { display: false }, datalabels: { display: false } },
-    scales: { y: { beginAtZero: true } },
-  };
-  const dias = ler("dados-dias");
-  new Chart(document.getElementById("grafico-dias"), {
-    type: "bar",
-    data: { labels: dias.rotulos, datasets: [{ data: dias.valores, backgroundColor: "#2a5d8f" }] },
-    options: opcoesBarras,
-  });
-  const horas = ler("dados-horas");
-  new Chart(document.getElementById("grafico-horas"), {
-    type: "bar",
-    data: { labels: horas.rotulos, datasets: [{ data: horas.valores, backgroundColor: "#12355b" }] },
-    options: opcoesBarras,
-  });
+  // Degrade vertical para areas de grafico de linha.
+  function degrade(canvas, cor, altura) {
+    const contexto = canvas.getContext("2d");
+    const g = contexto.createLinearGradient(0, 0, 0, altura);
+    g.addColorStop(0, cor.replace("1)", ".35)"));
+    g.addColorStop(1, cor.replace("1)", "0)"));
+    return g;
+  }
 
-  // --- Roscas dos turnos: percentual e nome do turno dentro de cada fatia ---
+  const linhas = ler("dados-linhas");
+
+  // ---------- Minigraficos do cabecalho ----------
+  function spark(id, valores) {
+    const canvas = document.getElementById(id);
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: valores.map((_, i) => i),
+        datasets: [{
+          data: valores, borderColor: "rgba(255,255,255,.9)", borderWidth: 2,
+          backgroundColor: degrade(canvas, "rgba(255,255,255,1)", 44),
+          fill: true, tension: 0.4, pointRadius: 0, spanGaps: true,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false } },
+      },
+    });
+  }
+  spark("spark-entradas", linhas.entradas);
+  spark("spark-vendas", linhas.vendas);
+  spark("spark-conversao", linhas.conversao);
+  spark("spark-receita", linhas.receita);
+
+  // ---------- Grafico de linhas: entradas x vendas ----------
+  (function () {
+    const canvas = document.getElementById("grafico-linhas");
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: linhas.rotulos,
+        datasets: [
+          {
+            label: "Entradas", data: linhas.entradas, yAxisID: "y",
+            borderColor: COR_ENTRADAS, borderWidth: 2.5,
+            backgroundColor: degrade(canvas, "rgba(10,92,255,1)", 330),
+            fill: true, tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
+          },
+          {
+            label: "Vendas", data: linhas.vendas, yAxisID: "y2",
+            borderColor: COR_VENDAS, borderWidth: 2.5, backgroundColor: COR_VENDAS,
+            fill: false, tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
+          },
+        ],
+      },
+      options: {
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { position: "top", align: "end", labels: { usePointStyle: true, pointStyle: "circle" } },
+          tooltip: {
+            callbacks: {
+              label: (c) => ` ${c.dataset.label}: ${br(c.parsed.y)}`,
+              footer: (itens) => {
+                const conversao = linhas.conversao[itens[0].dataIndex];
+                return conversao === null ? "" : `Conversão: ${conversao.toLocaleString("pt-BR")}%`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+          y: { beginAtZero: true, title: { display: true, text: "Entradas" } },
+          y2: { beginAtZero: true, position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "Vendas" } },
+        },
+      },
+    });
+  })();
+
+  // ---------- Barras com o pico em laranja ----------
+  function barrasComPico(id, dados) {
+    const maior = Math.max(...dados.valores);
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: {
+        labels: dados.rotulos,
+        datasets: [{
+          data: dados.valores, borderRadius: 6, borderSkipped: false,
+          backgroundColor: dados.valores.map((v) => (v === maior ? COR_PICO : COR_ENTRADAS_SUAVE)),
+          hoverBackgroundColor: dados.valores.map((v) => (v === maior ? COR_PICO : COR_ENTRADAS)),
+        }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
+          y: { beginAtZero: true },
+        },
+      },
+    });
+  }
+  barrasComPico("grafico-dias", ler("dados-dias"));
+  barrasComPico("grafico-horas", ler("dados-horas"));
+
+  // ---------- Roscas dos turnos: percentual e nome dentro de cada fatia ----------
   function rosca(idCanvas, dados, nomeMedida) {
     new Chart(document.getElementById(idCanvas), {
       type: "doughnut",
       plugins: [ChartDataLabels],
-      data: { labels: dados.rotulos, datasets: [{ data: dados.valores, backgroundColor: coresPorPosicao(dados.valores) }] },
+      data: {
+        labels: dados.rotulos,
+        datasets: [{ data: dados.valores, backgroundColor: coresPorPosicao(dados.valores), borderColor: "#fff", borderWidth: 3 }],
+      },
       options: {
         maintainAspectRatio: false,
+        cutout: "55%",
         plugins: {
-          legend: { display: false },  // o nome já aparece dentro de cada fatia
+          legend: { display: false },  // o nome ja aparece dentro de cada fatia
           datalabels: {
             color: "#fff",
             textAlign: "center",
             font: { weight: "bold", size: 14 },
-            // Duas linhas dentro da fatia: o percentual e, embaixo, o nome do turno.
             formatter: (valor, contexto) =>
               `${percentual(valor, dados.valores)}%\n${contexto.chart.data.labels[contexto.dataIndex]}`,
           },
@@ -285,27 +719,30 @@
   rosca("grafico-turnos-entradas", ler("dados-turnos-entradas"), "entradas");
   rosca("grafico-turnos-vendas", ler("dados-turnos-vendas"), "vendas");
 
-  // --- Barras deitadas dos dias da semana ("2.134 · 18%" dentro da barra) ---
+  // ---------- Barras deitadas dos dias da semana ("2.134 · 18%" dentro da barra) ----------
   function barrasSemana(idCanvas, dados) {
     new Chart(document.getElementById(idCanvas), {
       type: "bar",
       plugins: [ChartDataLabels],
-      data: { labels: dados.rotulos, datasets: [{ data: dados.valores, backgroundColor: CORES_DIAS, barPercentage: 0.85 }] },
+      data: {
+        labels: dados.rotulos,
+        datasets: [{ data: dados.valores, backgroundColor: CORES_DIAS, barPercentage: 0.85, borderRadius: 6, borderSkipped: false }],
+      },
       options: {
         maintainAspectRatio: false,
         indexAxis: "y",
         plugins: {
           legend: { display: false },
           datalabels: {
-            anchor: "end",
-            align: "start",
-            color: "#fff",
-            font: { weight: "bold" },
+            anchor: "end", align: "start", color: "#fff", font: { weight: "bold" },
             formatter: (valor) => `${br(valor)} · ${percentual(valor, dados.valores)}%`,
           },
           tooltip: { enabled: false },
         },
-        scales: { x: { beginAtZero: true, display: false, max: Math.max(...dados.valores) } },
+        scales: {
+          x: { beginAtZero: true, display: false, max: Math.max(...dados.valores) },
+          y: { grid: { display: false } },
+        },
       },
     });
   }

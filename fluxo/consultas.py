@@ -307,3 +307,178 @@ def indicadores_por_dia_da_semana(loja, data_inicial, data_final):
     return indicadores_agrupados(
         loja, data_inicial, data_final, lambda dia, hora: NOMES_DIAS[dia.weekday()], NOMES_DIAS
     )
+# ======================================================================
+# MAPA DE HORARIOS (hora x dia), com cores relativas a propria loja
+# ======================================================================
+
+# Faixas de cor, da mais fraca a mais forte (alem de "vazio" = sem movimento).
+FAIXAS_MAPA = ["baixo", "moderado", "alto", "muito-alto", "pico"]
+NOMES_FAIXAS = {
+    "vazio": "sem movimento", "baixo": "baixo", "moderado": "moderado",
+    "alto": "alto", "muito-alto": "muito alto", "pico": "pico",
+}
+
+
+def _percentil(valores_ordenados, fracao):
+    """Valor que deixa 'fracao' dos valores abaixo dele (ex.: 0.9 = os 10% mais altos ficam acima)."""
+    if not valores_ordenados:
+        return 0
+    posicao = round(fracao * (len(valores_ordenados) - 1))
+    return valores_ordenados[posicao]
+
+
+def mapa_de_horarios(loja, data_inicial, data_final):
+    """
+    Grade hora x dia com as entradas, pronta para a tela.
+
+    - Ate 7 dias: uma coluna por DATA (total de entradas).
+    - Mais de 7 dias: uma coluna por DIA DA SEMANA (MEDIA de entradas daquela hora).
+    - Linhas: so as horas de funcionamento da loja.
+    - Cores RELATIVAS a propria loja: as faixas sao cortadas pelos percentis
+      dos valores da grade (25%, 50%, 75%, 90%). "Pico" = os 10% mais altos.
+    """
+    contagem = _entradas_por_dia_e_hora(loja, data_inicial, data_final)
+    horarios = {h.dia_semana: (h.abre, h.fecha) for h in loja.horarios.all()}
+
+    def ultima_hora(fecha):
+        return (fecha.hour - 1) if fecha.minute == 0 else fecha.hour
+
+    # 1) Horas exibidas: da primeira abertura a ultima hora de funcionamento.
+    if horarios:
+        primeira = min(abre.hour for abre, _ in horarios.values())
+        ultima = max(ultima_hora(fecha) for _, fecha in horarios.values())
+    else:
+        primeira, ultima = 0, 23
+    horas = list(range(primeira, ultima + 1))
+
+    # 2) Colunas: datas (periodo curto) ou dias da semana (periodo longo).
+    #    "rotulos" = curtos, para o cabecalho da grade ("Sex 10/10");
+    #    "nomes" = completos, para os destaques ("Sexta, 10/10").
+    total_dias = (data_final - data_inicial).days + 1
+    por_data = total_dias <= 7
+    if por_data:
+        colunas = [data_inicial + timedelta(days=n) for n in range(total_dias)]
+        rotulos = [f"{NOMES_DIAS[dia.weekday()][:3]} {dia:%d/%m}" for dia in colunas]
+        nomes = [f"{NOMES_DIAS[dia.weekday()]}, {dia:%d/%m}" for dia in colunas]
+
+        def valor(coluna, hora):
+            return contagem.get((coluna, hora), 0)
+    else:
+        colunas = list(range(7))
+        rotulos = [nome[:3] for nome in NOMES_DIAS]
+        nomes = list(NOMES_DIAS)
+        somas = defaultdict(int)
+        datas_da_semana = defaultdict(set)
+        for (dia, hora), total in contagem.items():
+            somas[(dia.weekday(), hora)] += total
+            datas_da_semana[dia.weekday()].add(dia)
+
+        def valor(coluna, hora):
+            quantas = len(datas_da_semana[coluna])
+            return round(somas[(coluna, hora)] / quantas, 1) if quantas else 0
+
+    grade = [[valor(coluna, hora) for coluna in colunas] for hora in horas]
+
+    # 3) Faixas de cor relativas a propria loja.
+    positivos = sorted(v for linha in grade for v in linha if v > 0)
+    limites = [_percentil(positivos, fracao) for fracao in (0.25, 0.5, 0.75, 0.9)]
+
+    def faixa(v):
+        if v <= 0:
+            return "vazio"
+        for nome, limite in zip(FAIXAS_MAPA, limites):
+            if v <= limite:
+                return nome
+        return "pico"
+
+    linhas = [
+        {"hora": hora, "celulas": [{"valor": v, "faixa": faixa(v)} for v in linha]}
+        for hora, linha in zip(horas, grade)
+    ]
+
+    # Legenda: "vazio", as 4 faixas com limite ("ate X") e o "pico" ("acima de X").
+    legenda = [{"faixa": "vazio", "nome": NOMES_FAIXAS["vazio"], "ate": None, "acima": None}]
+    for nome, limite in zip(FAIXAS_MAPA[:-1], limites):
+        legenda.append({"faixa": nome, "nome": NOMES_FAIXAS[nome], "ate": limite, "acima": None})
+    legenda.append({"faixa": "pico", "nome": NOMES_FAIXAS["pico"], "ate": None, "acima": limites[-1] if limites else 0})
+
+    # 4) Destaques do periodo.
+    celulas = [(v, nomes[i], hora) for hora, linha in zip(horas, grade) for i, v in enumerate(linha) if v > 0]
+    celulas.sort(key=lambda celula: celula[0], reverse=True)
+    totais_coluna = [sum(linha[i] for linha in grade) for i in range(len(colunas))]
+    totais_hora = [sum(linha) for linha in grade]
+    total_geral = sum(totais_hora)
+
+    # Bloco de 6 horas seguidas com mais movimento.
+    tamanho = min(6, len(horas))
+    melhor_inicio = max(range(len(horas) - tamanho + 1), key=lambda i: sum(totais_hora[i:i + tamanho]), default=0)
+    bloco_total = sum(totais_hora[melhor_inicio:melhor_inicio + tamanho])
+
+    # Hora mais movimentada, somando todos os dias (media por dia).
+    indice_pico = totais_hora.index(max(totais_hora)) if total_geral else 0
+
+    # Entradas fora do horario de funcionamento (reposicao, faxina... ou algo a investigar).
+    fora_do_horario = 0
+    if horarios:
+        for (dia, hora), total in contagem.items():
+            horario = horarios.get(dia.weekday())
+            if horario is None or not (horario[0].hour <= hora <= ultima_hora(horario[1])):
+                fora_do_horario += total
+
+    destaques = {
+        # (entradas, nome do dia, hora)
+        "maior": celulas[0] if celulas else None,
+        "segundo": celulas[1] if len(celulas) > 1 else None,
+        # (nome do dia, entradas no dia)
+        "dia_maior": (nomes[totais_coluna.index(max(totais_coluna))], round(max(totais_coluna), 1)) if total_geral else None,
+        # (hora inicial, hora final, media de entradas por dia nessa hora)
+        "hora_pico": (
+            (horas[indice_pico], horas[indice_pico] + 1, round(totais_hora[indice_pico] / len(colunas), 1))
+            if total_geral else None
+        ),
+        # (hora inicial, hora final, % das entradas do dia)
+        "bloco": (
+            (horas[melhor_inicio], horas[melhor_inicio] + tamanho, round(bloco_total / total_geral * 100))
+            if total_geral else None
+        ),
+        "fora_do_horario": fora_do_horario,
+    }
+
+    return {
+        "por_data": por_data,
+        "rotulos": rotulos,
+        "linhas": linhas,
+        "legenda": legenda,
+        "destaques": destaques,
+    }
+
+def serie_diaria(loja, data_inicial, data_final):
+    """
+    Uma linha por dia do periodo, com entradas, vendas e faturamento JUNTOS
+    (venda nunca aparece sozinha). Base do grafico de linhas, dos minigraficos
+    do cabecalho e da comparacao com o periodo anterior.
+    Dias sem movimento entram com zero (o grafico nao "pula" dias).
+    """
+    entradas = _entradas_por_dia_e_hora(loja, data_inicial, data_final)
+    vendas = _vendas_por_dia_e_hora(loja, data_inicial, data_final)
+
+    # [entradas, vendas, faturamento] de cada dia.
+    somas = defaultdict(lambda: [0, 0, Decimal("0")])
+    for (dia, _hora), total in entradas.items():
+        somas[dia][0] += total
+    for (dia, _hora), (transacoes, faturamento) in vendas.items():
+        somas[dia][1] += transacoes
+        somas[dia][2] += faturamento
+
+    resultado = []
+    dia = data_inicial
+    while dia <= data_final:
+        total_entradas, total_vendas, total_faturamento = somas[dia]
+        resultado.append({
+            "dia": dia,
+            "entradas": total_entradas,
+            "vendas": total_vendas,
+            "faturamento": total_faturamento,
+        })
+        dia += timedelta(days=1)
+    return resultado
