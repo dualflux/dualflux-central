@@ -169,3 +169,19 @@ USE_THOUSAND_SEPARATOR = True
 
 # Pasta das imagens e arquivos da marca (logo, icones).
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+
+# ----------------------------------------------------------------------
+# SESSAO (quanto tempo a pessoa continua logada)
+# ----------------------------------------------------------------------
+# Sem isto, o Django mantem o login por 2 semanas: perigoso em computador
+# de loja, onde varias pessoas usam a mesma maquina.
+
+# Desloga depois de 8 horas SEM USO (um turno de trabalho).
+SESSION_COOKIE_AGE = 8 * 60 * 60
+
+# Cada clique "renova" as 8 horas: quem esta usando nao e deslogado no meio.
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Fechou o navegador, saiu do sistema.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
