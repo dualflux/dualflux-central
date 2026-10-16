@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% block titulo %}{{ empresa.nome }} - Visão da rede - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  /* ---------- Base da tela ---------- */
+  main { max-width: 1180px; }
+  :root { --entradas: #0a5cff; --vendas: #10b981; --pico: #f97316; }
+  html, body { overflow-x: hidden; }
+  .cartao { margin-bottom: 16px; min-width: 0; }
+  .kpis > *, .grade-lojas > *, .duas > *, .insights ul > * { min-width: 0; }
+  canvas { max-width: 100%; }
+  .cartao h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding-bottom: 10px;
+               font-size: 1.02rem; font-weight: 700; color: var(--texto); border-bottom: 1px solid var(--borda); }
+  .cartao h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--marca-azul); flex-shrink: 0; }
+  .cartao h2 + .nota { margin: -4px 0 14px; font-size: .9rem; font-weight: 500; color: var(--texto-apoio); }
+  .rolagem { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ---------- Cabecalho vitrine da rede ---------- */
+  .hero { position: relative; overflow: hidden; color: #fff; border-radius: 22px; padding: 28px 30px;
+          background:
+            radial-gradient(900px 380px at 90% -20%, rgba(10, 92, 255, .55), transparent 60%),
+            radial-gradient(600px 300px at -10% 120%, rgba(10, 92, 255, .25), transparent 60%),
+            linear-gradient(135deg, #14161a 0%, #1d2230 100%);
+          box-shadow: 0 24px 48px rgba(15, 23, 42, .22); }
+  .hero-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .hero-rotulo { color: #9db8ff; font-size: .9rem; font-weight: 600; }
+  .hero h1 { margin: 4px 0 6px; font-size: 2.3rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+  .hero-meta { margin: 0; color: #cbd5e1; font-size: .95rem; }
+  .status { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px;
+            background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); font-weight: 700; }
+  .status small { display: block; font-weight: 500; font-size: .78rem; color: #cbd5e1; }
+  .status .ponto { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status.online .ponto { background: #22c55e; box-shadow: 0 0 0 5px rgba(34, 197, 94, .22); }
+  .status.parcial .ponto { background: #f59e0b; box-shadow: 0 0 0 5px rgba(245, 158, 11, .22); }
+  .status.offline .ponto { background: #ef4444; box-shadow: 0 0 0 5px rgba(239, 68, 68, .22); }
+  .hero-periodo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+  .hero-periodo .data { color: #e2e8f0; font-weight: 600; }
+  .seletor { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08);
+             max-width: 100%; overflow-x: auto; }
+  .seletor a { padding: 7px 15px; border-radius: 999px; color: #e2e8f0; text-decoration: none; font-weight: 600;
+               font-size: .88rem; white-space: nowrap; }
+  .seletor a.ativo { background: #fff; color: #14161a; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 22px; }
+  .kpi { padding: 16px 18px; border-radius: 16px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
+  .kpi.principal { background: linear-gradient(135deg, rgba(10, 92, 255, .65), rgba(10, 92, 255, .25)); border-color: rgba(140, 175, 255, .55); }
+  .kpi-nome { color: #cbd5e1; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+  .kpi strong { display: block; margin: 6px 0 8px; font-size: 2rem; font-weight: 800; letter-spacing: -.02em;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .tendencia { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .delta { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+  .delta.sobe { background: rgba(34, 197, 94, .2); color: #86efac; }
+  .delta.cai { background: rgba(239, 68, 68, .2); color: #fca5a5; }
+  .delta.neutro { background: rgba(255, 255, 255, .08); color: #cbd5e1; font-weight: 600; }
+  .kpi small { color: #94a3b8; font-size: .75rem; }
+  .spark { position: relative; height: 44px; margin-top: 10px; }
+
+  /* ---------- O que os numeros dizem ---------- */
+  .insights { position: relative; margin: 22px 0 8px; padding: 22px 24px 22px 28px; border-radius: 18px; background: #fff;
+              border: 1px solid var(--borda); box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .05); }
+  .insights::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 5px; border-radius: 0 5px 5px 0;
+                      background: linear-gradient(180deg, var(--entradas), var(--vendas)); }
+  .insights-cabeca { display: flex; align-items: center; gap: 12px; }
+  .insights-cabeca .icone { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                            width: 46px; height: 46px; border-radius: 13px; font-size: 1.35rem; background: #fef9c3; }
+  .insights-cabeca h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
+  .insights-cabeca p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .9rem; }
+  .insights ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 16px 0 0; }
+  .insight { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid #eef2f7; background: #f8fafc; }
+  .insight .ins-icone { font-size: 1.35rem; line-height: 1.2; }
+  .insight p { margin: 0; color: #1e293b; line-height: 1.5; font-size: .95rem; }
+  .insight.alerta { background: #fff5f5; border-color: #fee2e2; }
+  .insight.pico { background: #fff7ed; border-color: #ffedd5; }
+  .insight.info { background: #eff6ff; border-color: #dbeafe; }
+  .insight.aviso { background: #fffbeb; border-color: #fde68a; }
+  .insight.tendencia { background: #f0fdf4; border-color: #dcfce7; }
+
+  /* ---------- Cabecalho de secao ---------- */
+  .secao { display: flex; align-items: center; gap: 14px; margin: 44px 0 16px; }
+  .secao::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #d5dce6, transparent); }
+  .secao .icone { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                  width: 46px; height: 46px; border-radius: 13px; font-size: 1.35rem; }
+  .secao h2 { margin: 0; font-size: 1.28rem; font-weight: 800; letter-spacing: -.01em; color: var(--texto); }
+  .secao p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .92rem; }
+  .s-azul .icone { background: #e8f0ff; }
+  .s-verde .icone { background: #e7f8f1; }
+  .s-laranja .icone { background: #fff1e6; }
+
+  /* ---------- Cartoes das lojas ---------- */
+  .grade-lojas { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .loja { position: relative; display: flex; flex-direction: column; margin: 0; padding: 20px;
+          transition: transform .15s, box-shadow .15s; }
+  .loja:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(15, 23, 42, .1); }
+  .loja.melhor { border-color: #a7f3d0; box-shadow: 0 0 0 1px #a7f3d0, 0 8px 24px rgba(16, 185, 129, .1); }
+  .loja.atencao { border-color: #fecaca; box-shadow: 0 0 0 1px #fecaca, 0 8px 24px rgba(239, 68, 68, .08); }
+  .loja-topo { display: flex; align-items: center; gap: 12px; }
+  .loja-sigla { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0;
+                border-radius: 12px; background: linear-gradient(135deg, #0a5cff, #3b82f6); color: #fff;
+                font-weight: 800; font-size: 1.1rem; }
+  .loja-nome { flex: 1; min-width: 0; }
+  .loja-nome strong { display: block; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .loja-nome small { color: var(--texto-apoio); }
+  .ponto-status { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--texto-apoio); }
+  .ponto-status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; }
+  .ponto-status.online::before { background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, .2); }
+  .ponto-status.offline::before { background: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, .2); }
+  .selo { position: absolute; top: -10px; right: 16px; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+  .selo.melhor { background: #10b981; color: #fff; }
+  .selo.atencao { background: #ef4444; color: #fff; }
+  .loja-conversao { display: flex; align-items: baseline; justify-content: space-between; margin: 16px 0 6px;
+                    padding: 12px 14px; border-radius: 12px; background: #f6f8fc; }
+  .loja-conversao span { color: var(--texto-apoio); font-size: .85rem; font-weight: 600; }
+  .loja-conversao strong { font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; }
+  .loja.melhor .loja-conversao strong { color: #059669; }
+  .loja.atencao .loja-conversao strong { color: #dc2626; }
+  .loja-numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 10px 0 4px; }
+  .loja-numeros div { min-width: 0; }
+  .loja-numeros small { display: block; color: var(--texto-apoio); font-size: .76rem; }
+  .loja-numeros b { font-size: 1.05rem; }
+  .var { margin-left: 4px; font-size: .74rem; font-weight: 700; }
+  .var.sobe { color: #059669; }
+  .var.cai { color: #dc2626; }
+  .loja-spark { position: relative; height: 46px; margin: 8px 0 12px; }
+  .ver-loja { margin-top: auto; display: flex; justify-content: center; padding: 10px; border-radius: 10px;
+              background: #eef4ff; color: var(--marca-azul); font-weight: 700; text-decoration: none; }
+  .ver-loja:hover { background: var(--marca-azul); color: #fff; }
+
+  /* ---------- Comparativo ---------- */
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .duas .cartao { margin: 0; }
+  .area-grafico { position: relative; height: 300px; }
+  .area-linhas { position: relative; height: 320px; }
+  table.ranking { width: 100%; min-width: 640px; border-collapse: collapse; font-size: .92rem; }
+  table.ranking th { text-align: right; padding: 10px 8px; color: var(--texto-apoio); font-size: .78rem;
+                     font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--borda); }
+  table.ranking td { text-align: right; padding: 12px 8px; border-bottom: 1px solid var(--borda); }
+  table.ranking th:first-child, table.ranking td:first-child { text-align: left; }
+  table.ranking td.conv { font-weight: 800; }
+  table.ranking tr.melhor td.conv { color: #059669; }
+  table.ranking tr.atencao td.conv { color: #dc2626; }
+  table.ranking tr.total td { font-weight: 800; background: #f6f8fc; border-bottom: 0; }
+  .posicao { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-right: 8px;
+             border-radius: 50%; background: #eef2f7; font-size: .78rem; font-weight: 700; }
+  tr.melhor .posicao { background: #10b981; color: #fff; }
+
+  /* ================= ADAPTACAO A CADA TIPO DE TELA ================= */
+  @media (min-width: 1600px) {
+    main { max-width: 1440px; }
+    .hero h1 { font-size: 2.8rem; }
+    .kpi strong { font-size: 2.5rem; }
+  }
+  @media (max-width: 1100px) { .duas { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) {
+    main { margin: 16px auto; padding: 0 12px; }
+    .hero { padding: 20px 18px; border-radius: 18px; }
+    .hero h1 { font-size: 1.7rem; }
+    .hero-periodo { flex-direction: column; align-items: flex-start; }
+    .kpis { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi { padding: 14px; }
+    .kpi strong { font-size: 1.5rem; }
+    .grade-lojas { grid-template-columns: 1fr; }
+    .secao { margin: 34px 0 12px; }
+    .secao h2 { font-size: 1.12rem; }
+    .insights { padding: 18px 16px 18px 22px; }
+    .insights ul { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 420px) { .kpis { grid-template-columns: 1fr; } }
+  @media (pointer: coarse) { .seletor a { padding: 10px 16px; } }
+</style>
+
+{# ======================= CABECALHO VITRINE DA REDE ======================= #}
+<section class="hero">
+  <div class="hero-topo">
+    <div>
+      <span class="hero-rotulo">Visão da rede</span>
+      <h1>{{ empresa.nome }}</h1>
+      <p class="hero-meta">🏪 {{ total_lojas }} loja{{ total_lojas|pluralize }}</p>
+    </div>
+    {% if total_lojas %}
+      <div class="status {% if lojas_online == total_lojas %}online{% elif lojas_online %}parcial{% else %}offline{% endif %}">
+        <span class="ponto"></span>
+        <span>{{ lojas_online }} de {{ total_lojas }} online<small>
+          {% if lojas_online == total_lojas %}todas as lojas enviando dados{% else %}há loja sem sinal agora{% endif %}
+        </small></span>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="hero-periodo">
+    <span class="data">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span>
+    <nav class="seletor">
+      {% for periodo in periodos %}
+        <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <span class="kpi-nome">Entradas da rede</span>
+      <strong>{{ rede.entradas }}</strong>
+      <div class="tendencia">
+        {% if comparacao and comparacao.entradas %}
+          <span class="delta {% if comparacao.entradas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.entradas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.entradas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+        {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      </div>
+      <div class="spark"><canvas id="spark-entradas"></canvas></div>
+    </div>
+    <div class="kpi">
+      <span class="kpi-nome">Vendas da rede</span>
+      <strong>{{ rede.vendas }}</strong>
+      <div class="tendencia">
+        {% if comparacao and comparacao.vendas %}
+          <span class="delta {% if comparacao.vendas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.vendas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.vendas.valor|floatformat:1 }}%</span><small>vs. {{ dias }} dias anteriores</small>
+        {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      </div>
+      <div class="spark"><canvas id="spark-vendas"></canvas></div>
+    </div>
+    <div class="kpi principal">
+      <span class="kpi-nome">Conversão da rede</span>
+      <strong>{% if rede.conversao is not None %}{{ rede.conversao|floatformat:1 }}%{% else %}–{% endif %}</strong>
+      <div class="tendencia">
+        {% if comparacao and comparacao.conversao %}
+          <span class="delta {% if comparacao.conversao.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.conversao.sobe %}▲{% else %}▼{% endif %} {{ comparacao.conversao.valor|floatformat:1 }} p.p.</span><small>vs. {{ dias }} dias anteriores</small>
+        {% else %}<span class="delta neutro">sem base de comparação</span>{% endif %}
+      </div>
+      <div class="spark"><canvas id="spark-conversao"></canvas></div>
+    </div>
+    <div class="kpi">
+      <span class="kpi-nome">Faturamento da rede</span>
+      <strong>R$ {{ rede.faturamento|floatformat:"0g" }}</strong>
+      <div class="tendencia">
+        {% if rede.receita_por_visitante is not None %}<span class="delta neutro">R$ {{ rede.receita_por_visitante|floatformat:"2g" }} por visitante</span>{% endif %}
+      </div>
+      <div class="spark"><canvas id="spark-receita"></canvas></div>
+    </div>
+  </div>
+</section>
+
+{# ======================= O QUE OS NUMEROS DIZEM ======================= #}
+{% if insights %}
+<section class="insights">
+  <div class="insights-cabeca">
+    <span class="icone">💡</span>
+    <div><h2>O que os números dizem</h2><p>Comparação automática entre as lojas no período</p></div>
+  </div>
+  <ul>
+    {% for insight in insights %}
+      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{{ insight.icone }}</span><p>{{ insight.texto }}</p></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{# ======================= LOJAS DA REDE ======================= #}
+<div class="secao s-azul">
+  <span class="icone">🏪</span>
+  <div><h2>Lojas da rede</h2><p>Cada loja com os mesmos números, lado a lado</p></div>
+</div>
+<div class="grade-lojas">
+  {% for item in lojas %}
+    <div class="cartao loja {{ item.destaque }}">
+      {% if item.destaque == "melhor" %}<span class="selo melhor">★ Melhor conversão</span>
+      {% elif item.destaque == "atencao" %}<span class="selo atencao">Atenção: menor conversão</span>{% endif %}
+
+      <div class="loja-topo">
+        <span class="loja-sigla">{{ item.loja.nome|cut:"Loja "|first|upper }}</span>
+        <div class="loja-nome">
+          <strong>{{ item.loja.nome }}</strong>
+          <small>{% if item.loja.cidade %}{{ item.loja.cidade }}{% if item.loja.uf %}/{{ item.loja.uf }}{% endif %}{% else %}&nbsp;{% endif %}</small>
+        </div>
+        {% if item.status %}
+          <span class="ponto-status {% if item.status.online %}online{% else %}offline{% endif %}">{% if item.status.online %}Online{% else %}Offline{% endif %}</span>
+        {% else %}
+          <span class="ponto-status">Sem conexão</span>
+        {% endif %}
+      </div>
+
+      <div class="loja-conversao">
+        <span>Conversão</span>
+        <strong>{% if item.ind.conversao is not None %}{{ item.ind.conversao|floatformat:1 }}%{% else %}–{% endif %}</strong>
+      </div>
+
+      <div class="loja-numeros">
+        <div><small>Entradas</small><b>{{ item.ind.entradas }}</b>
+          {% if item.var_entradas %}<span class="var {% if item.var_entradas.sobe %}sobe{% else %}cai{% endif %}">{% if item.var_entradas.sobe %}▲{% else %}▼{% endif %}{{ item.var_entradas.valor|floatformat:1 }}%</span>{% endif %}
+        </div>
+        <div><small>Vendas</small><b>{{ item.ind.vendas }}</b>
+          {% if item.var_vendas %}<span class="var {% if item.var_vendas.sobe %}sobe{% else %}cai{% endif %}">{% if item.var_vendas.sobe %}▲{% else %}▼{% endif %}{{ item.var_vendas.valor|floatformat:1 }}%</span>{% endif %}
+        </div>
+        <div><small>Ticket médio</small><b>{% if item.ind.ticket_medio is not None %}R$ {{ item.ind.ticket_medio|floatformat:"2g" }}{% else %}–{% endif %}</b></div>
+        <div><small>Receita por visitante</small><b>{% if item.ind.receita_por_visitante is not None %}R$ {{ item.ind.receita_por_visitante|floatformat:"2g" }}{% else %}–{% endif %}</b></div>
+      </div>
+
+      <div class="loja-spark"><canvas id="spark-loja-{{ forloop.counter0 }}"></canvas></div>
+      <a class="ver-loja" href="{% url 'loja_painel' empresa.slug item.loja.slug %}">Ver loja &rarr;</a>
+    </div>
+  {% empty %}
+    <div class="cartao">Nenhuma loja disponível para você ainda.</div>
+  {% endfor %}
+</div>
+
+{# ======================= COMPARATIVO ======================= #}
+{% if total_lojas %}
+<div class="secao s-laranja">
+  <span class="icone">📊</span>
+  <div><h2>Comparativo entre lojas</h2><p>Ranking pela conversão e a evolução da rede</p></div>
+</div>
+
+<div class="cartao">
+  <h2>Ranking de conversão</h2>
+  <p class="nota">Ordenado da maior para a menor conversão. A linha da rede soma todas as lojas antes de dividir.</p>
+  <div class="rolagem">
+    <table class="ranking">
+      <tr>
+        <th>Loja</th><th>Entradas</th><th>Vendas</th><th>Conversão</th><th>Ticket médio</th><th>Receita/visitante</th><th>Faturamento</th>
+      </tr>
+      {% for item in ranking %}
+        <tr class="{{ item.destaque }}">
+          <td><span class="posicao">{{ forloop.counter }}</span><a href="{% url 'loja_painel' empresa.slug item.loja.slug %}" style="color:inherit;text-decoration:none;font-weight:600">{{ item.loja.nome }}</a></td>
+          <td>{{ item.ind.entradas }}</td>
+          <td>{{ item.ind.vendas }}</td>
+          <td class="conv">{% if item.ind.conversao is not None %}{{ item.ind.conversao|floatformat:1 }}%{% else %}–{% endif %}</td>
+          <td>{% if item.ind.ticket_medio is not None %}R$ {{ item.ind.ticket_medio|floatformat:"2g" }}{% else %}–{% endif %}</td>
+          <td>{% if item.ind.receita_por_visitante is not None %}R$ {{ item.ind.receita_por_visitante|floatformat:"2g" }}{% else %}–{% endif %}</td>
+          <td>R$ {{ item.ind.faturamento|floatformat:"2g" }}</td>
+        </tr>
+      {% endfor %}
+      <tr class="total">
+        <td>Rede</td>
+        <td>{{ rede.entradas }}</td>
+        <td>{{ rede.vendas }}</td>
+        <td class="conv">{% if rede.conversao is not None %}{{ rede.conversao|floatformat:1 }}%{% else %}–{% endif %}</td>
+        <td>{% if rede.ticket_medio is not None %}R$ {{ rede.ticket_medio|floatformat:"2g" }}{% else %}–{% endif %}</td>
+        <td>{% if rede.receita_por_visitante is not None %}R$ {{ rede.receita_por_visitante|floatformat:"2g" }}{% else %}–{% endif %}</td>
+        <td>R$ {{ rede.faturamento|floatformat:"2g" }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="duas">
+  <div class="cartao">
+    <h2>Entradas e vendas por loja</h2>
+    <p class="nota">Mesma escala: a diferença entre as barras são as pessoas que não compraram.</p>
+    <div class="area-grafico"><canvas id="grafico-lojas"></canvas></div>
+  </div>
+  <div class="cartao">
+    <h2>Evolução da rede, dia a dia</h2>
+    <p class="nota">Todas as lojas somadas.</p>
+    <div class="area-grafico"><canvas id="grafico-rede"></canvas></div>
+  </div>
+</div>
+{% endif %}
+
+{# json_script: entrega os numeros ao JavaScript de forma segura. #}
+{{ grafico_rede|json_script:"dados-rede" }}
+{{ grafico_lojas|json_script:"dados-lojas" }}
+{{ sparks_lojas|json_script:"dados-sparks" }}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.color = "#64748b";
+  Chart.defaults.borderColor = "#eef2f7";
+
+  const ler = (id) => JSON.parse(document.getElementById(id).textContent);
+  const br = (numero) => numero.toLocaleString("pt-BR");
+  const COR_ENTRADAS = "#0a5cff", COR_VENDAS = "#10b981";
+
+  function degrade(canvas, rgb, altura, opacidade) {
+    const g = canvas.getContext("2d").createLinearGradient(0, 0, 0, altura);
+    g.addColorStop(0, `rgba(${rgb},${opacidade})`);
+    g.addColorStop(1, `rgba(${rgb},0)`);
+    return g;
+  }
+
+  // Minigrafico simples (sem eixos), na cor e no fundo pedidos.
+  function spark(id, valores, cor, rgb) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: valores.map((_, i) => i),
+        datasets: [{
+          data: valores, borderColor: cor, borderWidth: 2,
+          backgroundColor: degrade(canvas, rgb, 46, 0.3),
+          fill: true, tension: 0.4, pointRadius: 0, spanGaps: true,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false } },
+      },
+    });
+  }
+
+  // ---------- Minigraficos do cabecalho (rede) ----------
+  const rede = ler("dados-rede");
+  spark("spark-entradas", rede.entradas, "rgba(255,255,255,.9)", "255,255,255");
+  spark("spark-vendas", rede.vendas, "rgba(255,255,255,.9)", "255,255,255");
+  spark("spark-conversao", rede.conversao, "rgba(255,255,255,.9)", "255,255,255");
+  spark("spark-receita", rede.receita, "rgba(255,255,255,.9)", "255,255,255");
+
+  // ---------- Minigraficos de cada loja (entradas dia a dia) ----------
+  ler("dados-sparks").forEach((valores, i) => spark(`spark-loja-${i}`, valores, COR_ENTRADAS, "10,92,255"));
+
+  // ---------- Entradas e vendas por loja (mesma escala) ----------
+  const lojas = ler("dados-lojas");
+  const canvasLojas = document.getElementById("grafico-lojas");
+  if (canvasLojas) {
+    new Chart(canvasLojas, {
+      type: "bar",
+      data: {
+        labels: lojas.rotulos,
+        datasets: [
+          { label: "Entradas", data: lojas.entradas, backgroundColor: COR_ENTRADAS, borderRadius: 6, borderSkipped: false },
+          { label: "Vendas", data: lojas.vendas, backgroundColor: COR_VENDAS, borderRadius: 6, borderSkipped: false },
+        ],
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "top", align: "end", labels: { usePointStyle: true, pointStyle: "circle" } },
+          tooltip: {
+            callbacks: {
+              label: (c) => ` ${c.dataset.label}: ${br(c.parsed.y)}`,
+              footer: (itens) => {
+                const i = itens[0].dataIndex;
+                const conversao = lojas.entradas[i] ? lojas.vendas[i] / lojas.entradas[i] * 100 : null;
+                return conversao === null ? "" : `Conversão: ${conversao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+              },
+            },
+          },
+        },
+        scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
+      },
+    });
+  }
+
+  // ---------- Evolucao da rede (mesma escala, area verde por baixo da azul) ----------
+  const canvasRede = document.getElementById("grafico-rede");
+  if (canvasRede) {
+    new Chart(canvasRede, {
+      type: "line",
+      data: {
+        labels: rede.rotulos,
+        datasets: [
+          { label: "Entradas", data: rede.entradas, borderColor: COR_ENTRADAS, borderWidth: 2.5,
+            backgroundColor: degrade(canvasRede, "10,92,255", 300, 0.28), fill: true, tension: 0.35, pointRadius: 0 },
+          { label: "Vendas", data: rede.vendas, borderColor: COR_VENDAS, borderWidth: 2.5,
+            backgroundColor: degrade(canvasRede, "16,185,129", 300, 0.3), fill: true, tension: 0.35, pointRadius: 0 },
+        ],
+      },
+      options: {
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { position: "top", align: "end", labels: { usePointStyle: true, pointStyle: "circle" } },
+          tooltip: {
+            callbacks: {
+              label: (c) => ` ${c.dataset.label}: ${br(c.parsed.y)}`,
+              footer: (itens) => {
+                const conversao = rede.conversao[itens[0].dataIndex];
+                return conversao === null ? "" : `Conversão: ${conversao.toLocaleString("pt-BR")}%`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+          y: { beginAtZero: true },
+        },
+      },
+    });
+  }
+</script>
+{% endblock %}
