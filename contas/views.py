@@ -42,7 +42,7 @@ def inicio(request):
     """Porta de entrada: decide para onde cada usuario vai depois do login."""
     usuario = request.user
     if usuario.papel == Usuario.Papel.ADMIN:
-        return redirect("admin:index")
+        return redirect("clientes")
     return redirect("empresa_inicio", empresa_slug=usuario.empresa.slug)
 
 

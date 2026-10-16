@@ -10,6 +10,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 
 from contas import views as contas_views
+from contas.clientes import clientes
 from fluxo.api import EventosView, VendasView
 from fluxo.rede import empresa_painel
 from fluxo.views import loja_painel
@@ -29,6 +30,8 @@ urlpatterns = [
 
     # Telas do cliente.
     path("", contas_views.inicio, name="inicio"),
+    # Central do administrador DualFlux (antes das rotas com slug: "clientes" nao e empresa).
+    path("clientes/", clientes, name="clientes"),
     # Visao da rede: o nome continua "empresa_inicio" para nao quebrar links antigos.
     path("<slug:empresa_slug>/", empresa_painel, name="empresa_inicio"),
     path("<slug:empresa_slug>/<slug:loja_slug>/", loja_painel, name="loja_painel"),

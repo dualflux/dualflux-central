@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Clientes - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  main { max-width: 1180px; }
+  html, body { overflow-x: hidden; }
+
+  /* ---------- Cabecalho com os totais ---------- */
+  .hero { position: relative; overflow: hidden; color: #fff; border-radius: 22px; padding: 28px 30px;
+          background:
+            radial-gradient(900px 380px at 90% -20%, rgba(10, 92, 255, .55), transparent 60%),
+            linear-gradient(135deg, #14161a 0%, #1d2230 100%);
+          box-shadow: 0 24px 48px rgba(15, 23, 42, .22); }
+  .hero-rotulo { color: #9db8ff; font-size: .9rem; font-weight: 600; }
+  .hero h1 { margin: 4px 0 6px; font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; }
+  .hero p { margin: 0; color: #cbd5e1; }
+  .totais { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 22px; }
+  .total { min-width: 0; padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
+  .total span { display: block; color: #cbd5e1; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+  .total strong { display: block; margin-top: 4px; font-size: 1.9rem; font-weight: 800; }
+  .total small { color: #94a3b8; font-size: .78rem; }
+  .total.verde strong { color: #86efac; }
+  .total.vermelho { background: rgba(239,68,68,.16); border-color: rgba(239,68,68,.4); }
+  .total.vermelho strong { color: #fca5a5; }
+
+  /* ---------- Faixa de situacao ---------- */
+  .situacao { display: flex; align-items: center; gap: 10px; margin: 18px 0 6px; padding: 14px 18px; border-radius: 14px;
+              font-weight: 600; }
+  .situacao.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+  .situacao.atencao { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+  /* ---------- Cards das empresas ---------- */
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-top: 18px; }
+  .empresa { display: flex; flex-direction: column; min-width: 0; padding: 20px; border-radius: 18px; background: #fff;
+             border: 1px solid var(--borda); box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05); }
+  .empresa.alerta { border-color: #fecaca; box-shadow: 0 0 0 1px #fecaca, 0 8px 24px rgba(239,68,68,.08); }
+  .empresa-topo { display: flex; align-items: center; gap: 12px; }
+  .sigla { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px;
+           background: linear-gradient(135deg, #0a5cff, #3b82f6); color: #fff; font-weight: 800; font-size: 1.1rem; }
+  .empresa.suspensa .sigla { background: #94a3b8; }
+  .empresa-nome { flex: 1; min-width: 0; }
+  .empresa-nome strong { display: block; font-size: 1.08rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empresa-nome small { color: var(--texto-apoio); }
+  .selo { padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+  .selo.ativa { background: #ecfdf5; color: #047857; }
+  .selo.suspensa { background: #f1f5f9; color: #475569; }
+
+  .resumo { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 10px; }
+  .chip { padding: 4px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; background: #f1f5f9; color: #334155; }
+  .chip.verde { background: #ecfdf5; color: #047857; }
+  .chip.vermelho { background: #fef2f2; color: #b91c1c; }
+
+  .lojas { list-style: none; margin: 0 0 14px; padding: 0; border-top: 1px solid #eef2f7; }
+  .lojas li { padding: 10px 0; border-bottom: 1px solid #eef2f7; }
+  .loja-linha { display: flex; align-items: center; gap: 10px; }
+  .ponto { width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; background: #94a3b8; }
+  .ponto.online { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
+  .ponto.offline { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.2); }
+  .loja-linha a { flex: 1; min-width: 0; color: var(--texto); font-weight: 600; text-decoration: none;
+                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .loja-linha a:hover { color: var(--marca-azul); }
+  .visto { color: var(--texto-apoio); font-size: .78rem; white-space: nowrap; }
+  .alertas { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0 20px; }
+  .alertas span { padding: 2px 8px; border-radius: 6px; background: #fef2f2; color: #b91c1c; font-size: .76rem; font-weight: 600; }
+  .sem-lojas { padding: 12px 0; color: var(--texto-apoio); font-size: .9rem; }
+
+  .acoes { display: flex; gap: 8px; margin-top: auto; }
+  .acoes a { flex: 1; display: flex; justify-content: center; padding: 10px; border-radius: 10px; font-weight: 700;
+             text-decoration: none; font-size: .9rem; }
+  .ver { background: #eef4ff; color: var(--marca-azul); }
+  .ver:hover { background: var(--marca-azul); color: #fff; }
+  .editar { background: #f1f5f9; color: #334155; }
+  .editar:hover { background: #e2e8f0; }
+
+  @media (max-width: 760px) {
+    main { margin: 16px auto; padding: 0 12px; }
+    .hero { padding: 20px 18px; }
+    .hero h1 { font-size: 1.7rem; }
+    .totais { grid-template-columns: 1fr 1fr; }
+    .grade { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 1600px) { main { max-width: 1440px; } }
+</style>
+
+{# ======================= TOTAIS ======================= #}
+<section class="hero">
+  <span class="hero-rotulo">Central DualFlux</span>
+  <h1>Clientes</h1>
+  <p>Todas as empresas e a saúde de cada loja agora.</p>
+
+  <div class="totais">
+    <div class="total">
+      <span>Empresas</span><strong>{{ totais.empresas }}</strong>
+      <small>{% if totais.suspensas %}{{ totais.suspensas }} suspensa{{ totais.suspensas|pluralize }}{% else %}todas ativas{% endif %}</small>
+    </div>
+    <div class="total"><span>Lojas</span><strong>{{ totais.lojas }}</strong><small>ativas</small></div>
+    <div class="total verde"><span>Online</span><strong>{{ totais.online }}</strong><small>enviando sinal</small></div>
+    <div class="total {% if totais.offline or totais.nunca %}vermelho{% endif %}">
+      <span>Offline</span><strong>{{ totais.offline }}</strong>
+      <small>{% if totais.nunca %}+ {{ totais.nunca }} nunca conectada{{ totais.nunca|pluralize }}{% else %}sem sinal agora{% endif %}</small>
+    </div>
+  </div>
+</section>
+
+{% if totais.com_alerta %}
+  <div class="situacao atencao">⚠ {{ totais.com_alerta }} loja{{ totais.com_alerta|pluralize }} precisa{{ totais.com_alerta|pluralize:"m" }} de atenção. Elas aparecem primeiro.</div>
+{% elif totais.lojas %}
+  <div class="situacao ok">✓ Todas as lojas estão online e sem problemas.</div>
+{% endif %}
+
+{# ======================= EMPRESAS ======================= #}
+<div class="grade">
+  {% for item in itens %}
+    {% with empresa=item.empresa %}
+    <div class="empresa {% if item.com_alerta %}alerta{% endif %} {% if empresa.status == 'suspensa' %}suspensa{% endif %}">
+      <div class="empresa-topo">
+        <span class="sigla">{{ empresa.nome|first|upper }}</span>
+        <div class="empresa-nome">
+          <strong>{{ empresa.nome }}</strong>
+          <small>/{{ empresa.slug }}/ · {{ empresa.get_plano_display }}</small>
+        </div>
+        <span class="selo {{ empresa.status }}">{{ empresa.get_status_display }}</span>
+      </div>
+
+      <div class="resumo">
+        <span class="chip">{{ item.lojas|length }} loja{{ item.lojas|length|pluralize }}</span>
+        <span class="chip verde">{{ item.online }} online</span>
+        {% if item.com_alerta %}<span class="chip vermelho">{{ item.com_alerta }} com alerta</span>{% endif %}
+      </div>
+
+      <ul class="lojas">
+        {% for saude in item.lojas %}
+          <li>
+            <div class="loja-linha">
+              <span class="ponto {{ saude.estado }}"></span>
+              <a href="{% url 'loja_painel' empresa.slug saude.loja.slug %}">{{ saude.loja.nome }}</a>
+              <span class="visto">
+                {% if saude.estado == "online" %}online
+                {% elif saude.status %}visto há {{ saude.status.ultimo_heartbeat|timesince }}
+                {% else %}nunca conectou{% endif %}
+              </span>
+            </div>
+            {% if saude.alertas and saude.estado != "nunca" %}
+              <div class="alertas">{% for alerta in saude.alertas %}{% if alerta != "Sem sinal" %}<span>{{ alerta }}</span>{% endif %}{% endfor %}</div>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="sem-lojas">Nenhuma loja ativa cadastrada.</li>
+        {% endfor %}
+      </ul>
+
+      <div class="acoes">
+        <a class="ver" href="{% url 'empresa_inicio' empresa.slug %}">Ver painel &rarr;</a>
+        <a class="editar" href="{% url 'admin:contas_empresa_change' empresa.pk %}">Editar cadastro</a>
+      </div>
+    </div>
+    {% endwith %}
+  {% empty %}
+    <p>Nenhuma empresa cadastrada ainda.</p>
+  {% endfor %}
+</div>
+{% endblock %}
