@@ -185,3 +185,35 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # Fechou o navegador, saiu do sistema.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+
+# ----------------------------------------------------------------------
+# SEGURANCA DE PRODUCAO (liga sozinho quando DEBUG=False, ou seja, no VPS)
+# ----------------------------------------------------------------------
+# No notebook (DEBUG=True) nada disto vale: continua http://localhost:8000.
+# No servidor, o Nginx recebe o HTTPS e repassa para o Django.
+if not DEBUG:
+    import os
+
+    # O Nginx avisa "esta conexao veio por HTTPS" neste cabecalho.
+    # Sem isto, o Django acharia que tudo e http e entraria em loop de redirecionamento.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+    # W008: quem chegar por http:// e mandado para https://.
+    SECURE_SSL_REDIRECT = True
+
+    # W012 e W016: cookies de login e de formulario so viajam criptografados.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # W004 (HSTS): o navegador passa a usar SEMPRE https neste dominio.
+    # Comeca em 1 hora (3600). Depois de confirmar que o HTTPS esta estavel,
+    # sobe para 1 ano (31536000) no .env do servidor: DJANGO_HSTS_SECONDS=31536000
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "3600"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+    # Enderecos https de onde os formularios podem vir (ex.: https://app.dualflux.com.br).
+    # Varios separados por virgula, no .env do servidor.
+    CSRF_TRUSTED_ORIGINS = [
+        origem.strip() for origem in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if origem.strip()
+    ]
