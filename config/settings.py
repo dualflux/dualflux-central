@@ -217,3 +217,36 @@ if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         origem.strip() for origem in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if origem.strip()
     ]
+
+
+# ----------------------------------------------------------------------
+# BLOQUEIO DE TENTATIVAS DE SENHA (django-axes)
+# ----------------------------------------------------------------------
+# Depois de 5 senhas erradas para o mesmo e-mail, vindas do mesmo computador
+# (IP), o acesso fica bloqueado por 30 minutos. Vale para o login do cliente
+# e para a Administracao. Cada tentativa fica registrada (ver na Administracao).
+#
+# Por que "e-mail + IP" e nao so o e-mail? Se fosse so o e-mail, um invasor
+# poderia bloquear o dono DE PROPOSITO, errando a senha dele 5 vezes.
+INSTALLED_APPS = [*INSTALLED_APPS, "axes"]
+
+# O AxesMiddleware deve ser o ULTIMO da lista.
+MIDDLEWARE = [*MIDDLEWARE, "axes.middleware.AxesMiddleware"]
+
+# O axes confere o bloqueio ANTES do Django conferir a senha.
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+AXES_FAILURE_LIMIT = 5                              # tentativas erradas permitidas
+AXES_COOLOFF_TIME = 0.5                             # horas de bloqueio (0.5 = 30 minutos)
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True                        # acertou a senha: zera a contagem
+AXES_LOCKOUT_TEMPLATE = "registration/bloqueado.html"
+
+# No servidor, o Nginx fica na frente do Django: o IP verdadeiro de quem acessa
+# vem no cabecalho X-Forwarded-For (1 proxy = o Nginx).
+if not DEBUG:
+    AXES_IPWARE_PROXY_COUNT = 1
+    AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]

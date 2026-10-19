@@ -38,6 +38,25 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-axes"
+version = "8.3.1"
+description = "Keep track of failed login attempts in Django-powered sites."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "django_axes-8.3.1-py3-none-any.whl", hash = "sha256:f7887582fd12713064f1602091ff6152752becae5e891a15bf802746cab0f51a"},
+    {file = "django_axes-8.3.1.tar.gz", hash = "sha256:d57e923c0ba33cf45275253dd1313c3a3ff04bec686b38d677beb2b3d43c7bcd"},
+]
+
+[package.dependencies]
+asgiref = ">=3.6.0"
+django = ">=4.2"
+
+[package.extras]
+ipware = ["django-ipware (>=3)"]
+
+[[package]]
 name = "django-environ"
 version = "0.14.0"
 description = "A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
@@ -215,4 +234,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "aab9a43e19a44fd1c107a5c5209b9a28885f8fb5dfe26331fa753c953f181c8c"
+content-hash = "ecfad1da2d17fac1c8e7f5d9ac20d5fc3fed9610fa6f2dc41f0e14165e51c2b4"

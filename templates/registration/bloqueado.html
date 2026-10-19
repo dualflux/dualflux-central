@@ -1,0 +1,39 @@
+{% load static %}<!doctype html>
+{# Pagina mostrada pelo django-axes quando o acesso e bloqueado por excesso de tentativas. #}
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acesso bloqueado - DualFlux</title>
+  <link rel="icon" href="{% static 'img/dualflux-icone.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+           font-family: Inter, system-ui, sans-serif; color: #0f172a;
+           background: radial-gradient(800px 400px at 50% -10%, rgba(10,92,255,.12), transparent 60%), #f4f7fb; }
+    .caixa { width: 100%; max-width: 460px; padding: 32px 28px; text-align: center; border-radius: 20px; background: #fff;
+             border: 1px solid #dbe2ec; box-shadow: 0 20px 48px rgba(15,23,42,.10); }
+    .logo { width: 180px; max-width: 70%; height: auto; margin-bottom: 22px; }
+    .selo { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; margin-bottom: 14px;
+            border-radius: 50%; background: #fef2f2; }
+    h1 { margin: 0 0 10px; font-size: 1.5rem; font-weight: 800; }
+    p { margin: 0 0 14px; color: #475569; line-height: 1.55; }
+    .tempo { display: inline-block; margin: 4px 0 18px; padding: 8px 16px; border-radius: 999px; background: #fff7ed; color: #9a3412; font-weight: 700; }
+    .ajuda { margin-top: 8px; padding-top: 16px; border-top: 1px solid #eef2f7; font-size: .88rem; color: #64748b; }
+    a.voltar { display: inline-flex; margin-top: 6px; padding: 12px 22px; border-radius: 12px; color: #fff; font-weight: 700;
+               text-decoration: none; background: linear-gradient(180deg, #2a72ff, #0a5cff); }
+  </style>
+</head>
+<body>
+  <div class="caixa">
+    <img class="logo" src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
+    <div class="selo"><img src="{% static 'img/icones/aviso.png' %}" width="34" height="34" alt=""></div>
+    <h1>Acesso temporariamente bloqueado</h1>
+    <p>Houve muitas tentativas de entrada com senha errada.<br>Por segurança, o acesso foi bloqueado neste computador.</p>
+    <span class="tempo">Tente novamente em 30 minutos</span>
+    <p class="ajuda">Esqueceu a senha ou precisa de acesso agora?<br>Fale com o suporte DualFlux.</p>
+    <a class="voltar" href="{% url 'login' %}">Voltar ao login</a>
+  </div>
+</body>
+</html>
