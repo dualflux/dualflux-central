@@ -18,6 +18,10 @@
   canvas { max-width: 100%; }
   .cartao h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding-bottom: 10px;
                font-size: 1.02rem; font-weight: 700; color: var(--texto); border-bottom: 1px solid var(--borda); }
+  /* Selo do periodo no titulo de cada grafico: sempre se sabe a que datas os numeros se referem. */
+  .cartao h2 { flex-wrap: wrap; }
+  .cartao h2 .periodo { margin-left: auto; padding: 3px 10px; border-radius: 999px; background: #f1f5f9; color: #475569;
+                        font-size: .74rem; font-weight: 600; white-space: nowrap; }
   .cartao h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--marca-azul); flex-shrink: 0; }
   .cartao h2 + .nota { margin: -4px 0 14px; font-size: .9rem; font-weight: 500; color: var(--texto-apoio); }
   .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -140,11 +144,24 @@
   /* ---------- Trios: grafico | conversao | grafico ---------- */
   .trio { display: grid; grid-template-columns: 1fr 300px 1fr; gap: 16px; }
   .trio .cartao { margin: 0; }
+  /* Roscas dos turnos: legenda em cima, total e periodo no centro. */
+  .legenda-turnos { list-style: none; margin: 0 0 6px; padding: 0; }
+  .legenda-turnos li { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: .95rem; color: #334155; }
+  .legenda-turnos li b { margin-left: auto; color: var(--texto); font-weight: 800; }
+  .legenda-turnos li b.maior { color: #0a5cff; }
+  .legenda-turnos li b.menor { color: #dc2626; }
+  .legenda-turnos .bola { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .area-rosca { position: relative; height: 320px; }
+  .centro-rosca { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                  text-align: center; pointer-events: none; }
+  .centro-rosca small { color: #64748b; font-size: .82rem; }
+  .centro-rosca strong { font-size: 2.1rem; font-weight: 800; line-height: 1.2; color: var(--texto); }
+  .centro-rosca em { font-style: normal; color: #64748b; font-size: .82rem; font-weight: 600; }
   .conversao { display: flex; flex-direction: column; justify-content: center; }
   .linha-conv { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 4px; border-bottom: 1px solid var(--borda); }
   .linha-conv small { display: block; color: var(--texto-apoio); font-size: .86rem; margin-top: 3px; white-space: nowrap; }
   .linha-conv .taxa { font-size: 1.3rem; font-weight: 800; white-space: nowrap; }
-  .linha-conv.maior .taxa { color: #059669; }
+  .linha-conv.maior .taxa { color: #0a5cff; }
   .linha-conv.menor .taxa { color: #dc2626; }
   .compacta .linha-conv { padding: 5px 4px; }
   .compacta .linha-conv .taxa { font-size: 1.05rem; }
@@ -394,18 +411,18 @@
   <div><h2>Fluxo de pessoas</h2><p>Entradas e vendas dia a dia e ao longo do dia</p></div>
 </div>
 <div class="cartao">
-  <h2>Entradas e vendas, dia a dia</h2>
+  <h2>Entradas e vendas, dia a dia <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
   <p class="nota">As duas na mesma escala: o espaço entre o azul e o verde são as pessoas que entraram e não compraram.</p>
   <div class="area-linhas"><canvas id="grafico-linhas"></canvas></div>
 </div>
 <div class="duas">
   <div class="cartao">
-    <h2>Entradas por dia</h2>
+    <h2>Entradas por dia <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
     <p class="nota">Em laranja, o dia de maior movimento.</p>
     <div class="area-barras"><canvas id="grafico-dias"></canvas></div>
   </div>
   <div class="cartao">
-    <h2>Quando a loja enche</h2>
+    <h2>Quando a loja enche <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
     <p class="nota">Média de entradas em cada hora. Em laranja, a hora de pico.</p>
     <div class="area-barras"><canvas id="grafico-horas"></canvas></div>
   </div>
@@ -418,7 +435,7 @@
 </div>
 <div class="mapa-area">
   <div class="cartao">
-    <h2>Entradas por hora e dia</h2>
+    <h2>Entradas por hora e dia <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
     <p class="nota">
       {% if mapa.por_data %}Total de entradas em cada hora de cada dia.
       {% else %}Média de entradas em cada hora, por dia da semana.{% endif %}
@@ -458,7 +475,7 @@
     </div>
 
     <div class="cartao">
-      <h2>Destaques do período</h2>
+      <h2>Destaques do período <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
       {% with d=mapa.destaques %}
         {% if d.maior %}
           <div class="destaque d-pico">
@@ -501,10 +518,19 @@
 <div class="trio">
   <div class="cartao">
     <h2>Entradas</h2>
-    <div class="area-grafico"><canvas id="grafico-turnos-entradas"></canvas></div>
+    {# Legenda (cor, turno e %) montada pelo JavaScript com os dados do grafico. #}
+    <ul class="legenda-turnos" id="legenda-turnos-entradas"></ul>
+    <div class="area-rosca">
+      <canvas id="grafico-turnos-entradas"></canvas>
+      <div class="centro-rosca">
+        <small>Total de entradas</small>
+        <strong id="total-turnos-entradas">-</strong>
+        <em>📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</em>
+      </div>
+    </div>
   </div>
   <div class="cartao conversao">
-    <h2>Conversão</h2>
+    <h2>Conversão <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
     {% for grupo, ind in turnos %}
       <div class="linha-conv {{ ind.destaque }}">
         <span>
@@ -526,14 +552,18 @@
   </div>
   <div class="cartao">
     <h2>Vendas</h2>
-    <div class="area-grafico"><canvas id="grafico-turnos-vendas"></canvas></div>
+    {# Legenda (cor, turno e %) montada pelo JavaScript com os dados do grafico. #}
+    <ul class="legenda-turnos" id="legenda-turnos-vendas"></ul>
+    <div class="area-rosca">
+      <canvas id="grafico-turnos-vendas"></canvas>
+      <div class="centro-rosca">
+        <small>Total de vendas</small>
+        <strong id="total-turnos-vendas">-</strong>
+        <em>📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</em>
+      </div>
+    </div>
   </div>
 </div>
-<p class="cores">
-  Cores das roscas:<span class="bolinha" style="background:#0a5cff"></span>maior
-  <span class="bolinha" style="background:#f97316"></span>intermediário
-  <span class="bolinha" style="background:#ef4444"></span>menor
-</p>
 
 {# ======================= TRIO DOS DIAS DA SEMANA ======================= #}
 <div class="secao s-azul">
@@ -542,11 +572,11 @@
 </div>
 <div class="trio">
   <div class="cartao">
-    <h2>Entradas</h2>
+    <h2>Entradas <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
     <div class="area-grafico"><canvas id="grafico-semana-entradas"></canvas></div>
   </div>
   <div class="cartao conversao compacta">
-    <h2>Conversão</h2>
+    <h2>Conversão <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
     {% for grupo, ind in semana %}
       <div class="linha-conv {{ ind.destaque }}">
         <span>
@@ -562,7 +592,7 @@
     {% endfor %}
   </div>
   <div class="cartao">
-    <h2>Vendas</h2>
+    <h2>Vendas <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
     <div class="area-grafico"><canvas id="grafico-semana-vendas"></canvas></div>
   </div>
 </div>
@@ -573,7 +603,7 @@
   <div><h2>Abertura e fechamento</h2><p>Vale abrir mais cedo ou fechar mais tarde?</p></div>
 </div>
 <div class="cartao">
-  <h2>Abertura e fechamento, dia a dia</h2>
+  <h2>Abertura e fechamento, dia a dia <span class="periodo">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span></h2>
   <div class="rolagem">
     <table class="pontas">
       <tr>
@@ -757,34 +787,71 @@
   barrasComPico("grafico-dias", ler("dados-dias"));
   barrasComPico("grafico-horas", ler("dados-horas"));
 
-  // ---------- Roscas dos turnos: percentual e nome dentro de cada fatia ----------
-  function rosca(idCanvas, dados, nomeMedida) {
-    new Chart(document.getElementById(idCanvas), {
+  // ---------- Roscas dos turnos ----------
+  // Cor FIXA por turno (a mesma nos dois graficos): manha verde-claro, tarde laranja, noite verde.
+  const CORES_TURNOS = { "Manhã": "#b5e07a", "Tarde": "#f5821f", "Noite": "#1f9d4c" };
+
+  // Plugin proprio: desenha a porcentagem num selo branco com sombra, no meio de cada faixa.
+  const selosPercentuais = {
+    id: "selosPercentuais",
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const valores = chart.data.datasets[0].data;
+      const total = valores.reduce((a, b) => a + b, 0);
+      if (!total) return;
+      chart.getDatasetMeta(0).data.forEach((arco, i) => {
+        if (!valores[i]) return;
+        const { x, y } = arco.tooltipPosition();          // centro da faixa
+        const cor = chart.data.datasets[0].backgroundColor[i];
+        ctx.save();
+        ctx.shadowColor = "rgba(15, 23, 42, .22)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+        ctx.beginPath(); ctx.arc(x, y, 19, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+        ctx.shadowColor = "transparent";
+        ctx.lineWidth = 2; ctx.strokeStyle = cor; ctx.stroke();
+        ctx.fillStyle = "#0f172a"; ctx.font = "800 12px Inter, system-ui, sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(`${Math.round(valores[i] / total * 100)}%`, x, y + 0.5);
+        ctx.restore();
+      });
+    },
+  };
+
+  function rosca(medida, dados) {
+    const cores = dados.rotulos.map((nome) => CORES_TURNOS[nome] || "#94a3b8");
+    const total = dados.valores.reduce((a, b) => a + b, 0);
+
+    // Total no centro e legenda (cor, turno, %) acima do grafico.
+    document.getElementById(`total-turnos-${medida}`).textContent = br(total);
+    // Maior turno: azul com seta para cima. Menor: vermelho com seta para baixo (mesmo padrao do quadro de conversao).
+    const maior = Math.max(...dados.valores), menor = Math.min(...dados.valores);
+    document.getElementById(`legenda-turnos-${medida}`).innerHTML = dados.rotulos.map((nome, i) => {
+      const v = dados.valores[i];
+      const classe = maior !== menor && v === maior ? "maior" : maior !== menor && v === menor ? "menor" : "";
+      const seta = classe === "maior" ? "&#9650; " : classe === "menor" ? "&#9660; " : "";
+      return `<li><span class="bola" style="background:${cores[i]}"></span>${nome}<b class="${classe}">${seta}${total ? Math.round(v / total * 100) : 0}%</b></li>`;
+    }).join("");
+
+    new Chart(document.getElementById(`grafico-turnos-${medida}`), {
       type: "doughnut",
-      plugins: [ChartDataLabels],
+      plugins: [selosPercentuais],
       data: {
         labels: dados.rotulos,
-        datasets: [{ data: dados.valores, backgroundColor: coresPorPosicao(dados.valores), borderColor: "#fff", borderWidth: 3 }],
+        datasets: [{ data: dados.valores, backgroundColor: cores, borderWidth: 0, borderRadius: 40, spacing: 8 }],
       },
       options: {
         maintainAspectRatio: false,
-        cutout: "55%",
+        cutout: "66%",
+        layout: { padding: 6 },
         plugins: {
-          legend: { display: false },  // o nome ja aparece dentro de cada fatia
-          datalabels: {
-            color: "#fff",
-            textAlign: "center",
-            font: { weight: "bold", size: 14 },
-            formatter: (valor, contexto) =>
-              `${percentual(valor, dados.valores)}%\n${contexto.chart.data.labels[contexto.dataIndex]}`,
-          },
-          tooltip: { callbacks: { label: (c) => `${c.label}: ${br(c.parsed)} ${nomeMedida}` } },
+          legend: { display: false },     // a legenda fica em HTML, acima do grafico
+          datalabels: { display: false }, // as porcentagens vao nos selos brancos
+          tooltip: { callbacks: { label: (c) => `${c.label}: ${br(c.parsed)} ${medida}` } },
         },
       },
     });
   }
-  rosca("grafico-turnos-entradas", ler("dados-turnos-entradas"), "entradas");
-  rosca("grafico-turnos-vendas", ler("dados-turnos-vendas"), "vendas");
+  rosca("entradas", ler("dados-turnos-entradas"));
+  rosca("vendas", ler("dados-turnos-vendas"));
 
   // ---------- Barras deitadas dos dias da semana ("2.134 · 18%" dentro da barra) ----------
   function barrasSemana(idCanvas, dados) {
