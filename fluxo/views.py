@@ -214,7 +214,7 @@ def gerar_insights(resumo, turnos, semana, mapa, comparacao, dias):
 # ----------------------------------------------------------------------
 
 @login_required
-def loja_painel(request, empresa_slug, loja_slug):
+def loja_painel(request, empresa_slug, loja_slug, template="fluxo/loja_painel.html"):
     loja = loja_permitida(request.user, empresa_slug, loja_slug)
 
     # Periodo escolhido pelos botoes (?dias=7). Valor estranho = padrao.
@@ -230,6 +230,18 @@ def loja_painel(request, empresa_slug, loja_slug):
     hoje = datetime.now(ZoneInfo(loja.fuso_horario)).date()
     data_final = hoje - timedelta(days=1)
     data_inicial = data_final - timedelta(days=dias - 1)
+
+    # Periodo livre (?de=AAAA-MM-DD&ate=AAAA-MM-DD), usado pela tela Relatorios.
+    # So vale com datas validas, em ordem, ate ontem e com no maximo 366 dias;
+    # senao fica o periodo dos botoes (?dias=).
+    try:
+        de = datetime.strptime(request.GET.get("de", ""), "%Y-%m-%d").date()
+        ate = datetime.strptime(request.GET.get("ate", ""), "%Y-%m-%d").date()
+        if de <= ate <= data_final and (ate - de).days < 366:
+            data_inicial, data_final = de, ate
+            dias = (ate - de).days + 1
+    except ValueError:
+        pass
 
     # --- Indicadores (entradas + vendas sempre juntas) ---
     resumo = indicadores_do_periodo(loja, data_inicial, data_final)
@@ -287,4 +299,4 @@ def loja_painel(request, empresa_slug, loja_slug):
         "grafico_semana_entradas": para_grafico([(g, ind["entradas"]) for g, ind in semana]),
         "grafico_semana_vendas": para_grafico([(g, ind["vendas"]) for g, ind in semana]),
     }
-    return render(request, "fluxo/loja_painel.html", contexto)
+    return render(request, template, contexto)

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block titulo %}Relatórios - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  main { max-width: 920px; }
+  .cabeca { margin: 8px 0 16px; }
+  .cabeca h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; }
+  .cabeca p { margin: 4px 0 0; color: var(--texto-apoio); }
+
+  .painel-rel { padding: 22px; border-radius: 18px; background: #fff; border: 1px solid var(--borda);
+                box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05); }
+  .rotulo { display: block; margin: 0 0 6px; font-size: .78rem; font-weight: 700; color: var(--texto-apoio);
+            text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Linha 1: loja + periodo (+ datas quando personalizado). */
+  .linha { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+  .linha > div { min-width: 0; }
+  select, input[type=date] { width: 100%; height: 44px; padding: 0 12px; border: 1.5px solid var(--borda); border-radius: 11px;
+                             font: inherit; font-size: .98rem; background: #f4f7fb; color: var(--texto); }
+  select:focus, input[type=date]:focus { outline: none; border-color: #0a5cff; background: #fff; box-shadow: 0 0 0 4px rgba(10,92,255,.14); }
+  .datas { display: none; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+  .datas.mostrar { display: grid; }
+  .aviso { display: none; margin: 8px 0 0; color: #b91c1c; font-size: .85rem; font-weight: 600; }
+
+  /* Linha 2: partes do relatorio como botoes liga/desliga compactos. */
+  .incluir { margin-top: 18px; padding-top: 16px; border-top: 1px solid #eef2f7; }
+  .incluir-topo { display: flex; justify-content: space-between; align-items: baseline; }
+  .incluir-topo button { border: 0; background: none; padding: 2px 4px; color: #0a5cff; font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; }
+  .grade-secoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .opcao { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 11px;
+           border: 1.5px solid var(--borda); background: #fff; cursor: pointer; font-size: .9rem; font-weight: 600; color: #334155;
+           user-select: none; transition: border-color .12s, background .12s; }
+  .opcao input { position: absolute; opacity: 0; pointer-events: none; }
+  .opcao .chave { position: relative; flex-shrink: 0; width: 32px; height: 18px; border-radius: 999px; background: #cbd5e1; transition: background .12s; }
+  .opcao .chave::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+                         background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .12s; }
+  .opcao:has(input:checked) { border-color: #b7cdff; background: #f2f6ff; color: var(--texto); }
+  .opcao:has(input:checked) .chave { background: #0a5cff; }
+  .opcao:has(input:checked) .chave::after { transform: translateX(14px); }
+  .opcao:has(input:focus-visible) { outline: 3px solid rgba(10,92,255,.35); }
+
+  /* Linha 3: gerar. */
+  .rodape-rel { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  .rodape-rel small { color: var(--texto-apoio); }
+  .rodape-rel button { height: 46px; padding: 0 24px; border: 0; border-radius: 11px; font: inherit; font-weight: 800; color: #fff; cursor: pointer;
+                       background: linear-gradient(180deg, #2a72ff, #0a5cff); box-shadow: 0 8px 20px rgba(10,92,255,.28); }
+  .rodape-rel button:disabled { opacity: .45; cursor: not-allowed; }
+
+  @media (max-width: 760px) {
+    main { margin: 16px auto; padding: 0 12px; }
+    .painel-rel { padding: 16px; }
+    .linha { grid-template-columns: 1fr; }
+    .grade-secoes { grid-template-columns: 1fr 1fr; }
+    .rodape-rel button { width: 100%; }
+  }
+  @media (max-width: 420px) { .grade-secoes { grid-template-columns: 1fr; } }
+</style>
+
+<div class="cabeca">
+  <h1>Relatórios</h1>
+  <p>Monte o relatório e salve em PDF.</p>
+</div>
+
+{% if not lojas %}
+  <div class="painel-rel">Nenhuma loja disponível para você ainda.</div>
+{% else %}
+<div class="painel-rel">
+  <div class="linha">
+    <div>
+      <label class="rotulo" for="loja">Loja</label>
+      <select id="loja">
+        {% for loja in lojas %}<option value="{% url 'loja_relatorio' empresa.slug loja.slug %}">{{ loja.nome }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="rotulo" for="periodo">Período</label>
+      <select id="periodo">
+        {% for periodo in periodos %}<option value="{{ periodo }}" {% if periodo == periodo_padrao %}selected{% endif %}>Últimos {{ periodo }} dias</option>{% endfor %}
+        <option value="livre">📅 Personalizado…</option>
+      </select>
+    </div>
+  </div>
+  <div class="datas" id="datas">
+    <div><label class="rotulo" for="de">De</label><input type="date" id="de" value="{{ inicio_padrao|date:'Y-m-d' }}" max="{{ ontem|date:'Y-m-d' }}"></div>
+    <div><label class="rotulo" for="ate">Até</label><input type="date" id="ate" value="{{ ontem|date:'Y-m-d' }}" max="{{ ontem|date:'Y-m-d' }}"></div>
+  </div>
+  <p class="aviso" id="aviso">Confira as datas: a inicial antes da final, até ontem ({{ ontem|date:"d/m/Y" }}) e no máximo 366 dias.</p>
+
+  <div class="incluir">
+    <div class="incluir-topo">
+      <span class="rotulo">Incluir</span>
+      <span><button type="button" data-todos="1">Todos</button>·<button type="button" data-todos="0">Nenhum</button></span>
+    </div>
+    <div class="grade-secoes">
+      {% for codigo, titulo, explicacao in secoes %}
+        <label class="opcao" title="{{ explicacao }}"><input type="checkbox" class="secao" value="{{ codigo }}" checked><span class="chave"></span>{{ titulo }}</label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="rodape-rel">
+    <small id="contador"></small>
+    <button type="button" id="gerar">⬇ Gerar relatório</button>
+  </div>
+</div>
+
+<script>
+  const periodo = document.getElementById("periodo");
+  const datas = document.getElementById("datas");
+  const aviso = document.getElementById("aviso");
+  const botao = document.getElementById("gerar");
+  const chaves = [...document.querySelectorAll(".secao")];
+  const ONTEM = "{{ ontem|date:'Y-m-d' }}";
+
+  // "Personalizado" mostra os campos de data.
+  periodo.addEventListener("change", () => datas.classList.toggle("mostrar", periodo.value === "livre"));
+
+  // Quantas partes estao ligadas; sem nenhuma, nao da para gerar.
+  function atualizar() {
+    const ligadas = chaves.filter((c) => c.checked).length;
+    document.getElementById("contador").textContent = `${ligadas} de ${chaves.length} partes`;
+    botao.disabled = ligadas === 0;
+  }
+  chaves.forEach((c) => c.addEventListener("change", atualizar));
+  document.querySelectorAll("[data-todos]").forEach((b) => b.addEventListener("click", () => {
+    chaves.forEach((c) => (c.checked = b.dataset.todos === "1"));
+    atualizar();
+  }));
+  atualizar();
+
+  // Monta o endereco do relatorio e abre numa aba nova.
+  botao.addEventListener("click", () => {
+    const params = new URLSearchParams();
+    aviso.style.display = "none";
+    if (periodo.value === "livre") {
+      const de = document.getElementById("de").value, ate = document.getElementById("ate").value;
+      const dias = (new Date(ate) - new Date(de)) / 86400000 + 1;
+      if (!de || !ate || de > ate || ate > ONTEM || dias > 366) { aviso.style.display = "block"; return; }
+      params.set("de", de); params.set("ate", ate);
+    } else {
+      params.set("dias", periodo.value);
+    }
+    params.set("secoes", chaves.filter((c) => c.checked).map((c) => c.value).join(","));
+    window.open(`${document.getElementById("loja").value}?${params}`, "_blank", "noopener");
+  });
+</script>
+{% endif %}
+{% endblock %}

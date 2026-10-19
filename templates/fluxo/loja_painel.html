@@ -54,6 +54,9 @@
   .seletor a { padding: 7px 15px; border-radius: 999px; color: #e2e8f0; text-decoration: none; font-weight: 600;
                font-size: .88rem; white-space: nowrap; }
   .seletor a.ativo { background: #fff; color: #14161a; }
+  .botao-relatorio { padding: 8px 16px; border-radius: 999px; background: #fff; color: #0a5cff; font-weight: 700;
+                     font-size: .88rem; text-decoration: none; white-space: nowrap; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+  .botao-relatorio:hover { background: #eef4ff; }
   /* auto-fit: 4 colunas no PC, 2 no tablet, 1 no celular, sem estourar. */
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 22px; }
   .kpi { padding: 16px 18px; border-radius: 16px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
@@ -271,6 +274,8 @@
         <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
       {% endfor %}
     </nav>
+    {# Relatorio do MESMO periodo, numa aba nova, pronto para salvar em PDF. #}
+    <a class="botao-relatorio" href="{% url 'loja_relatorio' empresa.slug loja.slug %}?dias={{ dias }}" target="_blank" rel="noopener">⬇ Relatório PDF</a>
   </div>
 
   {# Os 4 numeros que vendem, com tendencia e minigrafico. #}

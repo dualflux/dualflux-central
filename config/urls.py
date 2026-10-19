@@ -14,6 +14,7 @@ from contas.clientes import clientes
 from contas.senha import SenhaAlterada, TrocarSenha
 from fluxo.api import EventosView, VendasView
 from fluxo.rede import empresa_painel
+from fluxo.relatorios import relatorios
 from fluxo.views import loja_painel
 from monitor.api import HeartbeatView
 
@@ -38,5 +39,10 @@ urlpatterns = [
     path("conta/senha/alterada/", SenhaAlterada.as_view(), name="senha_alterada"),
     # Visao da rede: o nome continua "empresa_inicio" para nao quebrar links antigos.
     path("<slug:empresa_slug>/", empresa_painel, name="empresa_inicio"),
+    # Tela onde o cliente monta o relatorio (antes da rota da loja: "relatorios" nao e loja).
+    path("<slug:empresa_slug>/relatorios/", relatorios, name="relatorios"),
     path("<slug:empresa_slug>/<slug:loja_slug>/", loja_painel, name="loja_painel"),
+    # Relatorio da loja: a MESMA view do painel, desenhando outro template (numeros identicos).
+    path("<slug:empresa_slug>/<slug:loja_slug>/relatorio/", loja_painel,
+         {"template": "fluxo/loja_relatorio.html"}, name="loja_relatorio"),
 ]

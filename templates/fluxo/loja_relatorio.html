@@ -1,0 +1,355 @@
+{% load static %}<!doctype html>
+{# RELATORIO DA LOJA para salvar em PDF (ou imprimir).                                   #}
+{# Recebe EXATAMENTE os mesmos dados da tela da loja (mesma view, outro template):       #}
+{# os numeros do PDF e do painel nunca ficam diferentes.                                 #}
+{# Pagina com largura fixa de folha A4: os graficos saem do mesmo tamanho na tela e no PDF. #}
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relatório {{ loja.nome }} {{ data_inicial|date:"d-m" }} a {{ data_final|date:"d-m-Y" }} - DualFlux</title>
+  <link rel="icon" href="{% static 'img/dualflux-icone.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Folha A4 com margens; numero da pagina no rodape (navegadores recentes). */
+    @page { size: A4; margin: 12mm 12mm 14mm;
+            @bottom-left { content: "DualFlux · relatório gerado pelo painel"; font: 8pt Inter, sans-serif; color: #94a3b8; }
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 8pt Inter, sans-serif; color: #94a3b8; } }
+    * { box-sizing: border-box; }
+    html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { margin: 0; background: #e9edf3; font-family: Inter, system-ui, sans-serif; color: #0f172a; font-size: 11pt; }
+
+    /* Barra de acoes (so na tela, some no PDF). */
+    .acoes { position: sticky; top: 0; z-index: 10; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+             padding: 12px; background: #14161a; }
+    .acoes button, .acoes a { padding: 10px 18px; border: 0; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .acoes button { color: #fff; background: linear-gradient(180deg, #2a72ff, #0a5cff); }
+    .acoes a { color: #e2e8f0; background: rgba(255,255,255,.1); }
+    .acoes span { align-self: center; color: #94a3b8; font-size: .85rem; }
+
+    /* Cada .folha e uma pagina A4. */
+    /* Na tela: uma "folha" A4 de largura fixa (os graficos saem do mesmo tamanho na tela e no PDF). */
+    .folha { width: 210mm; margin: 16px auto; padding: 12mm; background: #fff; box-shadow: 0 10px 30px rgba(15,23,42,.15); }
+    /* Cada parte do relatorio nao e cortada entre duas paginas. */
+    .bloco { break-inside: avoid; page-break-inside: avoid; }
+    .bloco.pode-quebrar { break-inside: auto; page-break-inside: auto; }
+    .bloco.pode-quebrar tr { break-inside: avoid; }
+
+    /* Capa / cabecalho */
+    .topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm; }
+    .topo img { width: 46mm; height: auto; }
+    .topo .gerado { text-align: right; color: #64748b; font-size: 8.5pt; }
+    .faixa { margin: 7mm 0 6mm; padding: 7mm 8mm; border-radius: 5mm; color: #fff;
+             background: radial-gradient(600px 260px at 95% -20%, rgba(10,92,255,.6), transparent 60%), linear-gradient(135deg, #14161a, #1d2230); }
+    .faixa small { color: #9db8ff; font-weight: 600; }
+    .faixa h1 { margin: 1mm 0 2mm; font-size: 22pt; font-weight: 800; letter-spacing: -.02em; }
+    .faixa p { margin: 0; color: #cbd5e1; }
+    .faixa .periodo { display: inline-block; margin-top: 3mm; padding: 1.5mm 4mm; border-radius: 99px; background: rgba(255,255,255,.12); color: #fff; font-weight: 700; }
+
+    h2 { display: flex; align-items: center; gap: 2.5mm; margin: 7mm 0 3mm; padding-bottom: 2mm; font-size: 13pt; font-weight: 800;
+         border-bottom: 1px solid #e2e8f0; }
+    h2::before { content: ""; width: 2.5mm; height: 2.5mm; border-radius: 50%; background: #0a5cff; }
+    h2 .per { margin-left: auto; padding: .8mm 3mm; border-radius: 99px; background: #f1f5f9; color: #475569; font-size: 8pt; font-weight: 600; }
+
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+    .kpi { padding: 4mm; border-radius: 3.5mm; border: 1px solid #e2e8f0; background: #f8fafc; }
+    .kpi.principal { color: #fff; border: 0; background: linear-gradient(135deg, #0a5cff, #3b82f6); }
+    .kpi span { display: block; color: #64748b; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .kpi.principal span { color: #dbeafe; }
+    .kpi strong { display: block; margin: 1.5mm 0 1mm; font-size: 17pt; font-weight: 800; letter-spacing: -.02em; }
+    .kpi .d { font-size: 8pt; font-weight: 700; }
+    .d.sobe { color: #059669; } .d.cai { color: #dc2626; } .d.neutro { color: #94a3b8; font-weight: 500; }
+    .kpi.principal .d.sobe { color: #bbf7d0; } .kpi.principal .d.cai { color: #fecaca; } .kpi.principal .d.neutro { color: #dbeafe; }
+
+    .insights { list-style: none; margin: 0; padding: 0; display: grid; gap: 2.5mm; }
+    .insights li { display: flex; gap: 3mm; padding: 3mm 4mm; border-radius: 3mm; border: 1px solid #eef2f7; background: #f8fafc; line-height: 1.45; font-size: 10pt; }
+    .insights li.alerta { background: #fff5f5; border-color: #fee2e2; }
+    .insights li.pico { background: #fff7ed; border-color: #ffedd5; }
+    .insights li.info { background: #eff6ff; border-color: #dbeafe; }
+    .insights li.tendencia { background: #f0fdf4; border-color: #dcfce7; }
+
+    .grafico { position: relative; height: 70mm; }
+    .grafico.baixo { height: 55mm; }
+    .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+    .nota { margin: -1mm 0 2mm; color: #64748b; font-size: 8.5pt; }
+
+    /* Roscas dos turnos */
+    .rosca-caixa { position: relative; height: 62mm; }
+    .rosca-centro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+    .rosca-centro small { color: #64748b; font-size: 7.5pt; }
+    .rosca-centro strong { font-size: 16pt; font-weight: 800; }
+    .legenda { display: flex; justify-content: center; gap: 4mm; margin-bottom: 2mm; font-size: 8.5pt; color: #334155; }
+    .legenda i { display: inline-block; width: 2.6mm; height: 2.6mm; margin-right: 1.2mm; border-radius: 50%; vertical-align: -.3mm; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    th { text-align: right; padding: 1.8mm 2mm; color: #64748b; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1.5px solid #e2e8f0; }
+    td { text-align: right; padding: 1.8mm 2mm; border-bottom: 1px solid #f1f5f9; }
+    th:first-child, td:first-child { text-align: left; }
+    td.conv { font-weight: 800; }
+    tr.maior td.conv { color: #0a5cff; } tr.menor td.conv { color: #dc2626; }
+    .etq { padding: .5mm 2mm; border-radius: 99px; font-size: 7.5pt; font-weight: 600; white-space: nowrap; }
+    .etq.fraca { background: #fee2e2; color: #b91c1c; } .etq.normal { background: #eef0f3; color: #475569; } .etq.forte { background: #dcfce7; color: #047857; }
+
+    .destaques { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+    .destaque { padding: 3mm 4mm; border-radius: 3mm; background: #f8fafc; border-left: 1.2mm solid #e2e8f0; }
+    .destaque b { display: block; color: #64748b; font-size: 7pt; text-transform: uppercase; letter-spacing: .05em; }
+    .destaque strong { display: block; margin: 1mm 0 .5mm; font-size: 10.5pt; }
+    .destaque span { color: #64748b; font-size: 8.5pt; }
+    .d-pico { border-color: #c92a2a; } .d-alto { border-color: #f76707; } .d-bloco { border-color: #10b981; } .d-aviso { border-color: #f59f00; }
+
+    @media print {
+      body { background: #fff; }
+      .acoes { display: none; }
+      .folha { width: auto; margin: 0; padding: 0; box-shadow: none; }
+    }
+    /* Celular: a folha A4 inteira cabe na tela (reduzida), sem estourar. */
+    @media screen and (max-width: 820px) { .folha { zoom: .46; } }
+  </style>
+</head>
+<body>
+
+<div class="acoes">
+  <button type="button" onclick="window.print()">⬇ Salvar PDF / Imprimir</button>
+  <a href="{% url 'loja_painel' empresa.slug loja.slug %}?dias={{ dias }}">← Voltar ao painel</a>
+  <span>Na janela que abrir, escolha "Salvar como PDF" e deixe "Gráficos de fundo" ligado.</span>
+</div>
+
+{# Partes escolhidas na tela Relatorios (?secoes=...). Sem escolha, entram todas. #}
+{% with s=request.GET.secoes|default:"resumo,insights,linhas,dias,horas,destaques,turnos,semana,pontas" per_ini=data_inicial|date:"d/m" per_fim=data_final|date:"d/m/Y" %}
+<main class="folha">
+
+  <div class="bloco">
+    <div class="topo">
+      <img src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
+      <div class="gerado">Gerado em {% now "d/m/Y H:i" %}<br>{{ user.email }}</div>
+    </div>
+    <div class="faixa">
+      <small>Relatório de desempenho · {{ empresa.nome }}</small>
+      <h1>{{ loja.nome }}</h1>
+      <p>{% if loja.cidade %}{{ loja.cidade }}{% if loja.uf %}/{{ loja.uf }}{% endif %} · {% endif %}{{ dias }} dia{{ dias|pluralize }} analisado{{ dias|pluralize }}</p>
+      <span class="periodo">📅 {{ per_ini }} a {{ per_fim }}</span>
+    </div>
+  </div>
+
+  {% if "resumo" in s %}
+  <div class="bloco">
+    <h2>Números principais <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <div class="kpis">
+      <div class="kpi"><span>Entradas</span><strong>{{ resumo.entradas }}</strong>
+        {% if comparacao and comparacao.entradas %}<span class="d {% if comparacao.entradas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.entradas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.entradas.valor|floatformat:1 }}% vs. {{ dias }} dias anteriores</span>{% else %}<span class="d neutro">sem base de comparação</span>{% endif %}
+      </div>
+      <div class="kpi"><span>Vendas</span><strong>{{ resumo.vendas }}</strong>
+        {% if comparacao and comparacao.vendas %}<span class="d {% if comparacao.vendas.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.vendas.sobe %}▲{% else %}▼{% endif %} {{ comparacao.vendas.valor|floatformat:1 }}% vs. {{ dias }} dias anteriores</span>{% else %}<span class="d neutro">sem base de comparação</span>{% endif %}
+      </div>
+      <div class="kpi principal"><span>Conversão</span><strong>{% if resumo.conversao is not None %}{{ resumo.conversao|floatformat:1 }}%{% else %}–{% endif %}</strong>
+        {% if comparacao and comparacao.conversao %}<span class="d {% if comparacao.conversao.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.conversao.sobe %}▲{% else %}▼{% endif %} {{ comparacao.conversao.valor|floatformat:1 }} p.p. vs. {{ dias }} dias anteriores</span>{% else %}<span class="d neutro">sem base de comparação</span>{% endif %}
+      </div>
+      <div class="kpi"><span>Faturamento</span><strong>R$ {{ resumo.faturamento|floatformat:"0g" }}</strong><span class="d neutro">no período</span></div>
+      <div class="kpi"><span>Ticket médio</span><strong>{% if resumo.ticket_medio is not None %}R$ {{ resumo.ticket_medio|floatformat:"2g" }}{% else %}–{% endif %}</strong><span class="d neutro">valor médio de cada venda</span></div>
+      <div class="kpi"><span>Receita por visitante</span><strong>{% if resumo.receita_por_visitante is not None %}R$ {{ resumo.receita_por_visitante|floatformat:"2g" }}{% else %}–{% endif %}</strong>
+        {% if comparacao and comparacao.receita_por_visitante %}<span class="d {% if comparacao.receita_por_visitante.sobe %}sobe{% else %}cai{% endif %}">{% if comparacao.receita_por_visitante.sobe %}▲{% else %}▼{% endif %} {{ comparacao.receita_por_visitante.valor|floatformat:1 }}% vs. {{ dias }} dias anteriores</span>{% else %}<span class="d neutro">sem base de comparação</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if "insights" in s and insights %}
+  <div class="bloco">
+    <h2>O que os números dizem</h2>
+    <ul class="insights">
+      {% for insight in insights %}<li class="{{ insight.tipo }}"><span>{{ insight.icone }}</span><span>{{ insight.texto }}</span></li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if "linhas" in s %}
+  <div class="bloco">
+    <h2>Entradas e vendas, dia a dia <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <p class="nota">Mesma escala: o espaço entre o azul e o verde são as pessoas que entraram e não compraram.</p>
+    <div class="grafico"><canvas id="g-linhas"></canvas></div>
+  </div>
+  {% endif %}
+
+  {% if "dias" in s %}
+  <div class="bloco">
+    <h2>Entradas por dia <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <p class="nota">Em laranja, o dia de maior movimento.</p>
+    <div class="grafico baixo"><canvas id="g-dias"></canvas></div>
+  </div>
+  {% endif %}
+
+  {% if "horas" in s %}
+  <div class="bloco">
+    <h2>Quando a loja enche <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <p class="nota">Média de entradas em cada hora do dia. Em laranja, a hora de pico.</p>
+    <div class="grafico baixo"><canvas id="g-horas"></canvas></div>
+  </div>
+  {% endif %}
+
+  {% if "destaques" in s %}
+  {% with d=mapa.destaques %}
+  <div class="bloco">
+    <h2>Destaques do período <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <div class="destaques">
+      {% if d.maior %}<div class="destaque d-pico"><b>Maior movimento</b><strong>{{ d.maior.1 }}, das {{ d.maior.2 }}h às {{ d.maior.2|add:1 }}h</strong><span>{{ d.maior.0 }} entradas{% if not mapa.por_data %} em média{% endif %}</span></div>{% endif %}
+      {% if d.segundo %}<div class="destaque d-alto"><b>2º maior movimento</b><strong>{{ d.segundo.1 }}, das {{ d.segundo.2 }}h às {{ d.segundo.2|add:1 }}h</strong><span>{{ d.segundo.0 }} entradas{% if not mapa.por_data %} em média{% endif %}</span></div>{% endif %}
+      {% if d.bloco %}<div class="destaque d-bloco"><b>Período mais movimentado</b><strong>Das {{ d.bloco.0 }}h às {{ d.bloco.1 }}h</strong><span>{{ d.bloco.2 }}% das entradas do dia</span></div>{% endif %}
+      {% if d.fora_do_horario %}<div class="destaque d-aviso"><b>Fora do horário</b><strong>{{ d.fora_do_horario }} entradas</strong><span>reposição, limpeza ou algo a verificar</span></div>{% endif %}
+    </div>
+  </div>
+  {% endwith %}
+  {% endif %}
+
+  {% if "turnos" in s %}
+  <div class="bloco">
+    <h2>Entradas x vendas por turno <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <div class="legenda"><span><i style="background:#b5e07a"></i>Manhã (até 12h)</span><span><i style="background:#f5821f"></i>Tarde (12h–18h)</span><span><i style="background:#1f9d4c"></i>Noite (após 18h)</span></div>
+    <div class="duas">
+      <div class="rosca-caixa"><canvas id="g-turnos-entradas"></canvas><div class="rosca-centro"><small>Entradas</small><strong id="t-entradas">-</strong></div></div>
+      <div class="rosca-caixa"><canvas id="g-turnos-vendas"></canvas><div class="rosca-centro"><small>Vendas</small><strong id="t-vendas">-</strong></div></div>
+    </div>
+    <table style="margin-top:4mm">
+      <tr><th>Turno</th><th>Entraram</th><th>Compraram</th><th>Conversão</th><th>Ticket médio</th></tr>
+      {% for grupo, ind in turnos %}
+        <tr class="{{ ind.destaque }}"><td><strong>{{ grupo }}</strong></td><td>{{ ind.entradas }}</td><td>{{ ind.vendas }}</td>
+          <td class="conv">{% if ind.destaque == "maior" %}▲ {% elif ind.destaque == "menor" %}▼ {% endif %}{% if ind.conversao is not None %}{{ ind.conversao|floatformat:1 }}%{% else %}-{% endif %}</td>
+          <td>{% if ind.ticket_medio is not None %}R$ {{ ind.ticket_medio|floatformat:"2g" }}{% else %}-{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if "semana" in s %}
+  <div class="bloco">
+    <h2>Entradas x vendas por dia da semana <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <div class="duas">
+      <div><p class="nota">Entradas</p><div class="grafico baixo"><canvas id="g-semana-entradas"></canvas></div></div>
+      <div><p class="nota">Vendas</p><div class="grafico baixo"><canvas id="g-semana-vendas"></canvas></div></div>
+    </div>
+    <table style="margin-top:3mm">
+      <tr><th>Dia</th><th>Entraram</th><th>Compraram</th><th>Conversão</th><th>Ticket médio</th></tr>
+      {% for grupo, ind in semana %}
+        <tr class="{{ ind.destaque }}"><td><strong>{{ grupo }}</strong></td><td>{{ ind.entradas }}</td><td>{{ ind.vendas }}</td>
+          <td class="conv">{% if ind.destaque == "maior" %}▲ {% elif ind.destaque == "menor" %}▼ {% endif %}{% if ind.conversao is not None %}{{ ind.conversao|floatformat:1 }}%{% else %}-{% endif %}</td>
+          <td>{% if ind.ticket_medio is not None %}R$ {{ ind.ticket_medio|floatformat:"2g" }}{% else %}-{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if "pontas" in s %}
+  <div class="bloco pode-quebrar">
+    <h2>Abertura e fechamento <span class="per">📅 {{ per_ini }} a {{ per_fim }}</span></h2>
+    <p class="nota">Primeira e última hora de cada dia. Média do período: abertura <strong>{{ pontas.media_abertura }}</strong> · fechamento <strong>{{ pontas.media_fechamento }}</strong> entradas.</p>
+    <table>
+      <tr><th>Data</th><th>Horário</th><th>Abertura</th><th>Fechamento</th></tr>
+      {% for linha in pontas.dias %}
+        <tr><td>{{ linha.data|date:"d/m" }} <small>{{ linha.dia_semana }}</small></td><td>{{ linha.horario }}</td>
+          <td>{{ linha.abertura }} <span class="etq {{ linha.css_abertura }}">{{ linha.leitura_abertura|capfirst }}</span></td>
+          <td>{{ linha.fechamento }} <span class="etq {{ linha.css_fechamento }}">{{ linha.leitura_fechamento|capfirst }}</span></td></tr>
+      {% empty %}
+        <tr><td colspan="4">Sem dados no período ou loja sem horário cadastrado.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+</main>
+{% endwith %}
+
+{{ grafico_linhas|json_script:"dados-linhas" }}
+{{ grafico_dias|json_script:"dados-dias" }}
+{{ grafico_horas|json_script:"dados-horas" }}
+{{ grafico_turnos_entradas|json_script:"dados-turnos-entradas" }}
+{{ grafico_turnos_vendas|json_script:"dados-turnos-vendas" }}
+{{ grafico_semana_entradas|json_script:"dados-semana-entradas" }}
+{{ grafico_semana_vendas|json_script:"dados-semana-vendas" }}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  // Sem animacao e com resolucao alta: o grafico ja nasce pronto e nitido para o PDF.
+  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.font.size = 10;
+  Chart.defaults.color = "#64748b";
+  Chart.defaults.borderColor = "#eef2f7";
+  Chart.defaults.animation = false;
+  Chart.defaults.devicePixelRatio = 3;
+  Chart.defaults.maintainAspectRatio = false;
+
+  const ler = (id) => JSON.parse(document.getElementById(id).textContent);
+  const existe = (id) => document.getElementById(id) !== null;  // parte desligada = canvas nao existe
+  const br = (n) => n.toLocaleString("pt-BR");
+  const AZUL = "#0a5cff", VERDE = "#10b981", LARANJA = "#f97316", AZUL_SUAVE = "#8fb3ff";
+
+  // Entradas e vendas dia a dia (mesma escala).
+  const linhas = ler("dados-linhas");
+  if (existe("g-linhas")) new Chart(document.getElementById("g-linhas"), {
+    type: "line",
+    data: { labels: linhas.rotulos, datasets: [
+      { label: "Entradas", data: linhas.entradas, borderColor: AZUL, backgroundColor: "rgba(10,92,255,.15)", fill: true, tension: .35, pointRadius: 0, borderWidth: 2 },
+      { label: "Vendas", data: linhas.vendas, borderColor: VERDE, backgroundColor: "rgba(16,185,129,.18)", fill: true, tension: .35, pointRadius: 0, borderWidth: 2 },
+    ] },
+    options: { plugins: { legend: { position: "top", align: "end", labels: { usePointStyle: true, boxWidth: 6 } } },
+               scales: { x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } }, y: { beginAtZero: true } } },
+  });
+
+  // Barras com o pico em laranja.
+  function barras(id, dados) {
+    if (!existe(id)) return;
+    const maior = Math.max(...dados.valores);
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: { labels: dados.rotulos, datasets: [{ data: dados.valores, borderRadius: 3, backgroundColor: dados.valores.map((v) => v === maior ? LARANJA : AZUL_SUAVE) }] },
+      options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } }, y: { beginAtZero: true } } },
+    });
+  }
+  barras("g-dias", ler("dados-dias"));
+  barras("g-horas", ler("dados-horas"));
+
+  // Roscas dos turnos: cor fixa por turno, porcentagem em selo branco.
+  const CORES_TURNOS = { "Manhã": "#b5e07a", "Tarde": "#f5821f", "Noite": "#1f9d4c" };
+  const selos = {
+    id: "selos",
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart, valores = chart.data.datasets[0].data, total = valores.reduce((a, b) => a + b, 0);
+      if (!total) return;
+      chart.getDatasetMeta(0).data.forEach((arco, i) => {
+        if (!valores[i]) return;
+        const { x, y } = arco.tooltipPosition();
+        ctx.save();
+        ctx.shadowColor = "rgba(15,23,42,.2)"; ctx.shadowBlur = 5;
+        ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+        ctx.shadowColor = "transparent"; ctx.lineWidth = 1.5; ctx.strokeStyle = chart.data.datasets[0].backgroundColor[i]; ctx.stroke();
+        ctx.fillStyle = "#0f172a"; ctx.font = "800 9.5px Inter, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(`${Math.round(valores[i] / total * 100)}%`, x, y + .5);
+        ctx.restore();
+      });
+    },
+  };
+  function rosca(id, idTotal, dados) {
+    if (!existe(id)) return;
+    document.getElementById(idTotal).textContent = br(dados.valores.reduce((a, b) => a + b, 0));
+    new Chart(document.getElementById(id), {
+      type: "doughnut", plugins: [selos],
+      data: { labels: dados.rotulos, datasets: [{ data: dados.valores, backgroundColor: dados.rotulos.map((n) => CORES_TURNOS[n] || "#94a3b8"), borderWidth: 0, borderRadius: 30, spacing: 6 }] },
+      options: { cutout: "64%", layout: { padding: 4 }, plugins: { legend: { display: false }, tooltip: { enabled: false } } },
+    });
+  }
+  rosca("g-turnos-entradas", "t-entradas", ler("dados-turnos-entradas"));
+  rosca("g-turnos-vendas", "t-vendas", ler("dados-turnos-vendas"));
+
+  // Dias da semana: barras deitadas, uma cor por dia.
+  const CORES_DIAS = ["#0a5cff", "#f97316", "#14b8a6", "#22c55e", "#eab308", "#a855f7", "#ec4899"];
+  function semana(id, dados) {
+    if (!existe(id)) return;
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: { labels: dados.rotulos, datasets: [{ data: dados.valores, backgroundColor: CORES_DIAS, borderRadius: 3 }] },
+      options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: "#f1f5f9" } }, y: { grid: { display: false } } } },
+    });
+  }
+  semana("g-semana-entradas", ler("dados-semana-entradas"));
+  semana("g-semana-vendas", ler("dados-semana-vendas"));
+</script>
+</body>
+</html>

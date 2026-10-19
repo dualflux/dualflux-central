@@ -164,7 +164,7 @@
         {% endfor %}
 
         <span class="grupo">Gestão</span>
-        <span class="em-breve">📈 Relatórios <em>em breve</em></span>
+        <a href="{% url 'relatorios' menu_empresa.slug %}" class="{% if menu_tela == 'relatorios' %}ativo{% endif %}">📈 Relatórios</a>
         <span class="em-breve">🔔 Alertas <em>em breve</em></span>
         <span class="em-breve">👥 Equipe <em>em breve</em></span>
         <span class="em-breve">⚙️ Configurações <em>em breve</em></span>
