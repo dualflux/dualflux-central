@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}Senha alterada - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  .caixa-ok { max-width: 520px; margin: 40px auto; padding: 32px 28px; text-align: center; border-radius: 20px; background: #fff;
+              border: 1px solid var(--borda); box-shadow: 0 8px 24px rgba(15,23,42,.06); }
+  .caixa-ok .selo { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; margin-bottom: 14px;
+                    border-radius: 50%; background: #ecfdf5; color: #059669; font-size: 2rem; font-weight: 800; }
+  .caixa-ok h1 { margin: 0 0 8px; font-size: 1.5rem; font-weight: 800; }
+  .caixa-ok p { margin: 0 0 22px; color: var(--texto-apoio); line-height: 1.5; }
+  .caixa-ok a { display: inline-flex; padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; text-decoration: none;
+                background: linear-gradient(180deg, #2a72ff, #0a5cff); }
+</style>
+<div class="caixa-ok">
+  <div class="selo">✓</div>
+  <h1>Senha alterada</h1>
+  <p>Sua nova senha já está valendo.<br>Por segurança, se você estava logado em outro computador ou celular, aquele acesso foi encerrado.</p>
+  <a href="{% url 'inicio' %}">Voltar ao painel</a>
+</div>
+{% endblock %}

@@ -203,9 +203,13 @@
             {% if user.empresa %}
               <a href="{% url 'empresa_inicio' user.empresa.slug %}">🏪 Minhas lojas</a>
             {% endif %}
+            {% if user.papel == "admin" %}
+              <a href="{% url 'clientes' %}">🏢 Clientes</a>
+            {% endif %}
             {% if user.is_staff %}
               <a href="{% url 'admin:index' %}">⚙️ Administração DualFlux</a>
             {% endif %}
+            <a href="{% url 'trocar_senha' %}">🔑 Trocar senha</a>
             {# Sair e feito por POST (formulario), nao por link: assim um link malicioso #}
             {# em outro site nao consegue deslogar o usuario sem ele clicar. #}
             <form method="post" action="{% url 'logout' %}">
