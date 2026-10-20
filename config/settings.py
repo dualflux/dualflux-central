@@ -250,3 +250,21 @@ AXES_LOCKOUT_TEMPLATE = "registration/bloqueado.html"
 if not DEBUG:
     AXES_IPWARE_PROXY_COUNT = 1
     AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
+
+
+# ----------------------------------------------------------------------
+# E-MAIL (codigos de acesso; depois, convites e alertas)
+# ----------------------------------------------------------------------
+# No notebook: o e-mail NAO sai de verdade, aparece no terminal
+# (docker compose logs web). No servidor, o .env define o servico real:
+#   DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+#   DJANGO_EMAIL_HOST, DJANGO_EMAIL_PORT, DJANGO_EMAIL_USER, DJANGO_EMAIL_PASSWORD
+import os  # noqa: E402
+
+EMAIL_BACKEND = os.environ.get("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("DJANGO_EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_EMAIL_PASSWORD", "")
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "DualFlux <naoresponda@dualflux.com.br>")

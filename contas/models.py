@@ -184,3 +184,79 @@ class Usuario(AbstractUser):
 
     def __str__(self):
         return self.email
+
+# ----------------------------------------------------------------------
+# CODIGO DE ACESSO (6 digitos): "esqueci minha senha" e convite de gerente
+# ----------------------------------------------------------------------
+import secrets  # noqa: E402  (gerador de numeros proprio para seguranca)
+from datetime import timedelta  # noqa: E402
+
+from django.utils import timezone  # noqa: E402
+from django.utils.crypto import constant_time_compare, salted_hmac  # noqa: E402
+
+
+class CodigoAcesso(models.Model):
+    """
+    Codigo de 6 digitos enviado por e-mail para a pessoa criar uma senha nova.
+
+    Seguranca:
+    - o codigo NUNCA e gravado: so o "hash" dele (como as senhas);
+    - vale por pouco tempo (15 min para recuperar senha, 3 dias para convite);
+    - no maximo 5 tentativas erradas; depois disso o codigo e anulado;
+    - e de uso unico: depois de criada a senha, nao vale mais.
+    """
+
+    class Finalidade(models.TextChoices):
+        RECUPERAR = "recuperar", "Recuperar senha"
+        CONVITE = "convite", "Convite (primeiro acesso)"
+
+    MAX_TENTATIVAS = 5
+    VALIDADE = {Finalidade.RECUPERAR: timedelta(minutes=15), Finalidade.CONVITE: timedelta(days=3)}
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="codigos_acesso")
+    finalidade = models.CharField(max_length=10, choices=Finalidade.choices)
+    codigo_hash = models.CharField(max_length=64)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    expira_em = models.DateTimeField()
+    tentativas = models.PositiveSmallIntegerField(default=0)
+    usado_em = models.DateTimeField(null=True, blank=True, help_text="Usado ou anulado: nao vale mais.")
+
+    class Meta:
+        verbose_name = "codigo de acesso"
+        verbose_name_plural = "codigos de acesso"
+        indexes = [models.Index(fields=["usuario", "criado_em"])]
+
+    @staticmethod
+    def _hash(usuario_id, codigo):
+        # HMAC com a SECRET_KEY: sem a chave do servidor, o hash nao revela o codigo.
+        return salted_hmac("dualflux.codigo-acesso", f"{usuario_id}:{codigo}").hexdigest()
+
+    @classmethod
+    def gerar(cls, usuario, finalidade):
+        """Cria um codigo novo (anulando os anteriores) e devolve (registro, codigo_em_texto)."""
+        agora = timezone.now()
+        cls.objects.filter(usuario=usuario, usado_em__isnull=True).update(usado_em=agora)
+        codigo = f"{secrets.randbelow(1_000_000):06d}"
+        registro = cls.objects.create(
+            usuario=usuario, finalidade=finalidade,
+            codigo_hash=cls._hash(usuario.pk, codigo),
+            expira_em=agora + cls.VALIDADE[finalidade],
+        )
+        return registro, codigo
+
+    @property
+    def valido(self):
+        return self.usado_em is None and self.tentativas < self.MAX_TENTATIVAS and timezone.now() < self.expira_em
+
+    def conferir(self, codigo):
+        """True se o codigo bate. Cada erro conta uma tentativa."""
+        if not self.valido:
+            return False
+        if constant_time_compare(self.codigo_hash, self._hash(self.usuario_id, codigo.strip())):
+            return True
+        self.tentativas += 1
+        self.save(update_fields=["tentativas"])
+        return False
+
+    def __str__(self):
+        return f"{self.usuario} - {self.get_finalidade_display()} - {self.criado_em:%d/%m %H:%M}"

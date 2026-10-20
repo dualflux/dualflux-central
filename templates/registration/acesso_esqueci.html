@@ -1,0 +1,17 @@
+{% extends "registration/acesso_base.html" %}
+{% block titulo %}Esqueci minha senha{% endblock %}
+{% block conteudo %}
+<div class="etapas"><span class="feita"></span><span></span><span></span></div>
+<h1>Esqueci minha senha</h1>
+<p class="sub">Digite o e-mail da sua conta. Vamos enviar um código de 6 números para você criar uma senha nova.</p>
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="campo">
+    <label for="id_email">E-mail</label>
+    <input type="email" name="email" id="id_email" value="{{ form.email.value|default:'' }}" autocomplete="username" inputmode="email" autocapitalize="none" required autofocus>
+    {% if form.email.errors %}<ul class="erro-campo">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  <button type="submit" class="botao">Enviar código</button>
+</form>
+<p class="links"><a href="{% url 'login' %}">← Voltar ao login</a> · <a href="{% url 'confirmar_codigo' %}?primeiro=1">Já tenho um código</a></p>
+{% endblock %}

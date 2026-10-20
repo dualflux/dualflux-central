@@ -1,0 +1,48 @@
+{% load static %}<!doctype html>
+{# Base das telas de acesso por codigo (pessoa ainda nao logada: sem menu). #}
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Acesso{% endblock %} - DualFlux</title>
+  <link rel="icon" href="{% static 'img/dualflux-icone.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+           font-family: Inter, system-ui, sans-serif; color: #0f172a;
+           background: radial-gradient(800px 400px at 50% -10%, rgba(10,92,255,.12), transparent 60%), #f4f7fb; }
+    .caixa { width: 100%; max-width: 440px; padding: 32px 28px; border-radius: 20px; background: #fff;
+             border: 1px solid #dbe2ec; box-shadow: 0 20px 48px rgba(15,23,42,.10); }
+    .logo { display: block; width: 170px; max-width: 70%; height: auto; margin-bottom: 26px; }
+    .etapas { display: flex; gap: 6px; margin-bottom: 18px; }
+    .etapas span { flex: 1; height: 5px; border-radius: 99px; background: #e2e8f0; }
+    .etapas span.feita { background: #0a5cff; }
+    h1 { margin: 0 0 6px; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+    .sub { margin: 0 0 22px; color: #475569; line-height: 1.5; }
+    label { display: block; margin: 0 0 6px; font-size: .88rem; font-weight: 600; color: #1e293b; }
+    .campo { margin-bottom: 16px; }
+    input[type=email], input[type=password], input[type=text] {
+      width: 100%; height: 50px; padding: 0 14px; border: 1.5px solid #dbe2ec; border-radius: 12px;
+      font: inherit; font-size: 1rem; background: #f4f7fb; color: #0f172a; }
+    input:focus { outline: none; border-color: #0a5cff; background: #fff; box-shadow: 0 0 0 4px rgba(10,92,255,.14); }
+    input.codigo { height: 62px; text-align: center; font-size: 1.8rem; font-weight: 800; letter-spacing: .5em; padding-left: .5em; }
+    .erro { margin-bottom: 16px; padding: 12px 14px; border-radius: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: .92rem; }
+    .erro-campo { margin: 6px 0 0; padding: 0; list-style: none; color: #b91c1c; font-size: .85rem; }
+    .info { margin-bottom: 16px; padding: 12px 14px; border-radius: 12px; background: #eff6ff; border: 1px solid #dbeafe; color: #1e3a8a; font-size: .92rem; line-height: 1.45; }
+    .botao { width: 100%; height: 52px; border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-size: 1.02rem; font-weight: 700;
+             color: #fff; background: linear-gradient(180deg, #2a72ff, #0a5cff); box-shadow: 0 10px 24px rgba(10,92,255,.3); }
+    .links { margin-top: 20px; padding-top: 16px; border-top: 1px solid #eef2f7; text-align: center; font-size: .9rem; color: #64748b; }
+    .links a { color: #0a5cff; font-weight: 600; text-decoration: none; }
+    .regras { margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid #eef2f7; color: #475569; font-size: .84rem; }
+    .regras ul { margin: 4px 0 0; padding-left: 18px; }
+    @media (pointer: coarse) { input[type=email], input[type=password], input[type=text] { height: 54px; } }
+  </style>
+</head>
+<body>
+  <main class="caixa">
+    <img class="logo" src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
+    {% block conteudo %}{% endblock %}
+  </main>
+</body>
+</html>

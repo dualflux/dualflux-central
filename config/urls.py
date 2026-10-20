@@ -10,6 +10,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 
 from contas import views as contas_views
+from contas.acesso import confirmar_codigo, esqueci_senha, nova_senha
 from contas.clientes import clientes
 from contas.senha import SenhaAlterada, TrocarSenha
 from fluxo.api import EventosView, VendasView
@@ -29,6 +30,10 @@ urlpatterns = [
     # Entrada e saida do sistema.
     path("login/", contas_views.Login.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
+    # Acesso por codigo de 6 digitos: esqueci a senha e primeiro acesso (convite).
+    path("acesso/esqueci/", esqueci_senha, name="esqueci_senha"),
+    path("acesso/codigo/", confirmar_codigo, name="confirmar_codigo"),
+    path("acesso/nova-senha/", nova_senha, name="nova_senha"),
 
     # Telas do cliente.
     path("", contas_views.inicio, name="inicio"),

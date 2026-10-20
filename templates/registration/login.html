@@ -111,6 +111,9 @@
     .olho:focus-visible { outline: 2px solid var(--azul); }
     .caps { display: none; margin-top: 7px; font-size: .82rem; font-weight: 600; color: #b45309; }
     .caps.mostrar { display: block; }
+    .esqueci { display: block; margin-top: 8px; text-align: right; font-size: .86rem; font-weight: 600; color: var(--azul); text-decoration: none; }
+    .esqueci:hover, .ajuda a:hover { text-decoration: underline; }
+    .ajuda a { color: var(--azul); font-weight: 700; text-decoration: none; }
 
     .botao { position: relative; width: 100%; height: 54px; margin-top: 8px; border: 0; border-radius: 12px; cursor: pointer;
              font: inherit; font-size: 1.02rem; font-weight: 700; color: #fff;
@@ -269,12 +272,13 @@
             </button>
           </div>
           <span class="caps" id="aviso-caps">Caps Lock está ligado</span>
+          <a class="esqueci" href="{% url 'esqueci_senha' %}">Esqueci minha senha</a>
         </div>
 
         <button type="submit" class="botao" id="botao-entrar">Entrar</button>
       </form>
 
-      <p class="ajuda">Problemas para entrar? Fale com o suporte DualFlux.</p>
+      <p class="ajuda">Recebeu um convite? <a href="{% url 'confirmar_codigo' %}?primeiro=1">Primeiro acesso</a><br>Problemas para entrar? Fale com o suporte DualFlux.</p>
       <p class="seguro">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
         Conexão protegida. Seus dados ficam só com a sua empresa.

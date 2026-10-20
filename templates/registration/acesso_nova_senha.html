@@ -1,0 +1,23 @@
+{% extends "registration/acesso_base.html" %}
+{% block titulo %}Criar senha{% endblock %}
+{% block conteudo %}
+<div class="etapas"><span class="feita"></span><span class="feita"></span><span class="feita"></span></div>
+<h1>{% if convite %}Crie sua senha{% else %}Crie uma senha nova{% endif %}</h1>
+<p class="sub">{{ usuario.email }}</p>
+{% if form.non_field_errors %}<div class="erro" role="alert">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="campo">
+    <label for="id_new_password1">Nova senha</label>
+    <input type="password" name="new_password1" id="id_new_password1" autocomplete="new-password" required autofocus>
+    {% if form.new_password1.errors %}<ul class="erro-campo">{% for e in form.new_password1.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  <div class="campo">
+    <label for="id_new_password2">Repita a nova senha</label>
+    <input type="password" name="new_password2" id="id_new_password2" autocomplete="new-password" required>
+    {% if form.new_password2.errors %}<ul class="erro-campo">{% for e in form.new_password2.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  <div class="regras">A senha precisa:<ul><li>ter pelo menos 8 caracteres (recomendamos 12 ou mais);</li><li>não ser parecida com o seu nome ou e-mail;</li><li>não ser comum nem só números.</li></ul></div>
+  <button type="submit" class="botao">Salvar senha e entrar</button>
+</form>
+{% endblock %}
