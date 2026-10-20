@@ -260,3 +260,15 @@ class CodigoAcesso(models.Model):
 
     def __str__(self):
         return f"{self.usuario} - {self.get_finalidade_display()} - {self.criado_em:%d/%m %H:%M}"
+
+
+# ----------------------------------------------------------------------
+# Enderecos reservados acrescentados com as telas novas.
+# validar_slug_livre le SLUGS_RESERVADOS na hora de validar, entao basta
+# completar a lista aqui (o que ja existia continua valendo).
+# ----------------------------------------------------------------------
+SLUGS_RESERVADOS_SISTEMA = {
+    "admin", "api", "login", "logout", "static", "media",
+    "clientes", "acesso", "conta",
+}
+SLUGS_RESERVADOS = frozenset(SLUGS_RESERVADOS) | SLUGS_RESERVADOS_SISTEMA

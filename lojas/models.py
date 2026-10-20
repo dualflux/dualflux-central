@@ -47,6 +47,18 @@ class Regiao(models.Model):
         return self.nome
 
 
+# Enderecos que ficam logo depois do nome da empresa (ex.: /rede/relatorios/):
+# uma loja com esse nome ficaria escondida atras da tela.
+SLUGS_LOJA_RESERVADOS = {"relatorios", "equipe"}
+
+
+def validar_slug_loja(valor):
+    """Impede cadastrar loja com um endereco reservado do sistema."""
+    from django.core.exceptions import ValidationError
+    if valor in SLUGS_LOJA_RESERVADOS:
+        raise ValidationError(f'"{valor}" e um endereco reservado do sistema. Escolha outro.')
+
+
 class Loja(models.Model):
     """Unidade fisica do cliente. Cada loja tem UM servidor local."""
 
@@ -57,6 +69,7 @@ class Loja(models.Model):
         "endereco",
         max_length=60,
         help_text="Parte da URL: app.dualflux.com.br/<empresa>/<endereco>.",
+        validators=[validar_slug_loja],
     )
 
     # Nome do servidor local (padrao cliente-cidade-NN). Liga o SaaS a maquina fisica.
