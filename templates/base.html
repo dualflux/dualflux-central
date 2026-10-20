@@ -166,7 +166,9 @@
         <span class="grupo">Gestão</span>
         <a href="{% url 'relatorios' menu_empresa.slug %}" class="{% if menu_tela == 'relatorios' %}ativo{% endif %}">📈 Relatórios</a>
         <span class="em-breve">🔔 Alertas <em>em breve</em></span>
-        <span class="em-breve">👥 Equipe <em>em breve</em></span>
+        {% if user.papel != "gerente" %}
+          <a href="{% url 'equipe' menu_empresa.slug %}" class="{% if menu_tela == 'equipe' or menu_tela == 'gerente_novo' or menu_tela == 'gerente_editar' %}ativo{% endif %}">👥 Equipe</a>
+        {% endif %}
         <span class="em-breve">⚙️ Configurações <em>em breve</em></span>
       </nav>
 

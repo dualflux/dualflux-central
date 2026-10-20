@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block titulo %}Equipe - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  main { max-width: 980px; }
+  .cabeca { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin: 8px 0 16px; }
+  .cabeca h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; }
+  .cabeca p { margin: 4px 0 0; color: var(--texto-apoio); }
+  .botao { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; border: 0; border-radius: 11px; font: inherit;
+           font-weight: 700; text-decoration: none; cursor: pointer; color: #fff; background: linear-gradient(180deg, #2a72ff, #0a5cff);
+           box-shadow: 0 8px 20px rgba(10,92,255,.25); }
+
+  /* Codigo do convite recem-gerado (aparece uma vez). */
+  .convite { margin-bottom: 16px; padding: 20px 22px; border-radius: 18px; border: 1px solid #a7f3d0;
+             background: linear-gradient(135deg, #ecfdf5, #f0fdf4); }
+  .convite h2 { margin: 0 0 6px; font-size: 1.1rem; }
+  .convite p { margin: 0 0 12px; color: #065f46; }
+  .codigo-grande { display: inline-block; margin: 2px 0 12px; padding: 10px 18px; border-radius: 12px; background: #fff;
+                   color: #0a5cff; font-size: 1.9rem; font-weight: 800; letter-spacing: .35em; border: 1px solid #d1fae5; }
+  .convite .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .convite button { padding: 10px 16px; border: 0; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; }
+  .whats { color: #fff; background: #16a34a; }
+  .copiar { color: #065f46; background: #fff; border: 1px solid #a7f3d0 !important; }
+  .convite small { display: block; margin-top: 10px; color: #047857; }
+
+  .lista { border-radius: 18px; background: #fff; border: 1px solid var(--borda); overflow: hidden;
+           box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05); }
+  .pessoa { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 18px;
+            border-bottom: 1px solid #eef2f7; }
+  .pessoa:last-child { border-bottom: 0; }
+  .pessoa.desativado { opacity: .6; }
+  .avatar-p { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%;
+              color: #fff; font-weight: 800; background: linear-gradient(135deg, #0a5cff, #3b82f6); }
+  .pessoa.dono .avatar-p { background: linear-gradient(135deg, #14161a, #475569); }
+  .nome strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nome small { display: block; color: var(--texto-apoio); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .chip { padding: 2px 9px; border-radius: 999px; font-size: .75rem; font-weight: 700; background: #f1f5f9; color: #334155; }
+  .chip.ativo { background: #ecfdf5; color: #047857; }
+  .chip.pendente { background: #fff7ed; color: #c2410c; }
+  .chip.desativado { background: #f1f5f9; color: #64748b; }
+  .chip.papel { background: #eef4ff; color: #0a5cff; }
+  .acoes-p { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .acoes-p a, .acoes-p button { padding: 8px 12px; border: 1px solid var(--borda); border-radius: 9px; background: #fff; color: #334155;
+                                font: inherit; font-size: .85rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
+  .acoes-p a:hover, .acoes-p button:hover { background: #f1f5ff; color: #0a5cff; }
+  .acoes-p .perigo:hover { background: #fef2f2; color: #b91c1c; }
+  .acoes-p form { margin: 0; }
+  .vazio { padding: 26px; text-align: center; color: var(--texto-apoio); }
+
+  @media (max-width: 760px) {
+    main { margin: 16px auto; padding: 0 12px; }
+    .pessoa { grid-template-columns: 40px minmax(0, 1fr); }
+    .acoes-p { grid-column: 1 / -1; justify-content: flex-start; }
+    .cabeca .botao { width: 100%; justify-content: center; }
+  }
+</style>
+
+<div class="cabeca">
+  <div><h1>Equipe</h1><p>Quem acessa o painel da {{ empresa.nome }}.</p></div>
+  <a class="botao" href="{% url 'gerente_novo' empresa.slug %}">＋ Convidar gerente</a>
+</div>
+
+{% if convite %}
+  <div class="convite" role="status">
+    <h2>✓ Convite enviado para {{ convite.nome }}</h2>
+    <p>Enviamos o código para <strong>{{ convite.email }}</strong>. Se preferir, passe por WhatsApp:</p>
+    <span class="codigo-grande">{{ convite.codigo }}</span>
+    <div class="acoes">
+      <button type="button" class="whats" id="btn-whats">Enviar pelo WhatsApp</button>
+      <button type="button" class="copiar" id="btn-copiar">Copiar mensagem</button>
+    </div>
+    <small>O código vale por 3 dias. Por segurança, ele só aparece agora; se precisar, use "Reenviar convite".</small>
+  </div>
+  <script>
+    const mensagem = `Olá! Seu acesso ao painel DualFlux da {{ empresa.nome|escapejs }} está pronto.\n\n1. Abra: {{ convite.link|escapejs }}\n2. Digite seu e-mail: {{ convite.email|escapejs }}\n3. Digite o código: {{ convite.codigo|escapejs }}\n4. Crie sua senha.\n\nO código vale por 3 dias.`;
+    document.getElementById("btn-whats").addEventListener("click", () =>
+      window.open("https://wa.me/?text=" + encodeURIComponent(mensagem), "_blank", "noopener"));
+    document.getElementById("btn-copiar").addEventListener("click", async (e) => {
+      try { await navigator.clipboard.writeText(mensagem); e.target.textContent = "✓ Copiada"; }
+      catch { e.target.textContent = "Não foi possível copiar"; }
+    });
+  </script>
+{% endif %}
+
+<div class="lista">
+  {% for item in itens %}
+    {% with u=item.u %}
+    <div class="pessoa {{ u.papel }} {{ item.situacao }}">
+      <span class="avatar-p">{{ u.first_name|default:u.email|first|upper }}</span>
+      <div class="nome">
+        <strong>{% if u.first_name %}{{ u.get_full_name }}{% else %}{{ u.email }}{% endif %}{% if u == user %} (você){% endif %}</strong>
+        <small>{{ u.email }}</small>
+        <div class="chips">
+          <span class="chip papel">{{ u.get_papel_display }}</span>
+          <span class="chip {{ item.situacao }}">{% if item.situacao == "ativo" %}Ativo{% elif item.situacao == "pendente" %}Convite pendente{% else %}Desativado{% endif %}</span>
+          {% if u.papel == "gerente" %}
+            {% for nome in item.lojas %}<span class="chip">{{ nome }}</span>{% empty %}<span class="chip pendente">sem loja</span>{% endfor %}
+          {% else %}<span class="chip">Todas as lojas</span>{% endif %}
+        </div>
+      </div>
+      {% if u.papel == "gerente" %}
+        <div class="acoes-p">
+          <a href="{% url 'gerente_editar' empresa.slug u.pk %}">Editar</a>
+          {% if item.situacao == "pendente" %}
+            <form method="post" action="{% url 'gerente_reenviar_convite' empresa.slug u.pk %}">{% csrf_token %}<button type="submit">Reenviar convite</button></form>
+          {% endif %}
+          <form method="post" action="{% url 'gerente_ativar' empresa.slug u.pk %}"
+                onsubmit="return confirm('{% if u.is_active %}Desativar o acesso de {{ u.email|escapejs }}? Ele sai do sistema na hora.{% else %}Reativar o acesso de {{ u.email|escapejs }}?{% endif %}')">
+            {% csrf_token %}
+            <button type="submit" class="{% if u.is_active %}perigo{% endif %}">{% if u.is_active %}Desativar{% else %}Reativar{% endif %}</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+    {% endwith %}
+  {% empty %}
+    <div class="vazio">Ninguém na equipe ainda.</div>
+  {% endfor %}
+</div>
+{% endblock %}
