@@ -13,6 +13,7 @@ from contas import views as contas_views
 from contas.acesso import confirmar_codigo, esqueci_senha, nova_senha
 from contas.clientes import clientes
 from contas.configuracoes import configuracoes, horarios_loja
+from avisos import views as avisos_views
 from contas import equipe as equipe_views
 from contas.senha import SenhaAlterada, TrocarSenha
 from fluxo.api import EventosView, VendasView
@@ -52,6 +53,12 @@ urlpatterns = [
     path("<slug:empresa_slug>/alertas/", alertas, name="alertas"),
     path("<slug:empresa_slug>/configuracoes/", configuracoes, name="configuracoes"),
     path("<slug:empresa_slug>/configuracoes/horarios/<slug:loja_slug>/", horarios_loja, name="horarios_loja"),
+    # Notificacoes (Telegram / e-mail): cada pessoa cuida so das proprias.
+    path("<slug:empresa_slug>/configuracoes/notificacoes/", avisos_views.notificacoes, name="notificacoes"),
+    path("<slug:empresa_slug>/configuracoes/notificacoes/telegram/conectar/", avisos_views.conectar_telegram, name="conectar_telegram"),
+    path("<slug:empresa_slug>/configuracoes/notificacoes/telegram/desconectar/", avisos_views.desconectar_telegram, name="desconectar_telegram"),
+    path("<slug:empresa_slug>/configuracoes/notificacoes/telegram/status/", avisos_views.status_telegram, name="status_telegram"),
+    path("<slug:empresa_slug>/configuracoes/notificacoes/teste/", avisos_views.enviar_teste, name="enviar_teste_aviso"),
     # Equipe: so o dono (gerentes da propria empresa).
     path("<slug:empresa_slug>/equipe/", equipe_views.equipe, name="equipe"),
     path("<slug:empresa_slug>/equipe/novo/", equipe_views.gerente_novo, name="gerente_novo"),

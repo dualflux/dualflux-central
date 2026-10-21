@@ -268,3 +268,16 @@ EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_EMAIL_PASSWORD", "")
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "DualFlux <naoresponda@dualflux.com.br>")
+
+
+# ----------------------------------------------------------------------
+# AVISOS: relatorios e alertas por Telegram / e-mail (app "avisos")
+# ----------------------------------------------------------------------
+# O token do robo fica SO no .env (nunca no Git):  TELEGRAM_BOT_TOKEN=...
+import os as _os_avisos
+
+INSTALLED_APPS = [*INSTALLED_APPS, "avisos"]
+TELEGRAM_BOT_TOKEN = _os_avisos.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_BOT_USUARIO = _os_avisos.environ.get("TELEGRAM_BOT_USUARIO", "DualFluxAvisosBot")
+# Endereco usado nos links das mensagens (no servidor: https://app.dualflux.com.br).
+DUALFLUX_SITE_URL = _os_avisos.environ.get("DUALFLUX_SITE_URL", "http://localhost:8000")

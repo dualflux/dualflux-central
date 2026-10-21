@@ -62,6 +62,14 @@
   </form>
 </section>
 
+{% if user.papel != "admin" %}
+<section class="bloco-cfg">
+  <h2>Notificações</h2>
+  <p class="sub">Receba o resumo diário, o semanal e os alertas urgentes no Telegram ou por e-mail.</p>
+  <a class="botao azul" href="{% url 'notificacoes' empresa.slug %}">Configurar notificações</a>
+</section>
+{% endif %}
+
 {% if edita_horarios %}
 <section class="bloco-cfg">
   <h2>Horários das lojas</h2>
