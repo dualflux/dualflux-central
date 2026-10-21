@@ -12,6 +12,8 @@ As permissoes sao as mesmas das telas:
 - administrador DualFlux (sem empresa): a empresa que ele estiver visitando.
 """
 
+import logging
+
 from .models import Empresa, Usuario
 
 
@@ -35,7 +37,20 @@ def menu_lateral(request):
     else:
         lojas = empresa.lojas.filter(ativa=True)
 
+    # Contador do menu de Alertas (urgentes + atencao). Import aqui dentro para
+    # nao criar importacao circular entre os apps contas e fluxo.
+    from fluxo.alertas import contar_alertas
+
+    # O menu aparece em TODAS as telas: se o calculo dos alertas falhar por
+    # qualquer motivo, mostra zero e registra o erro, mas a pagina abre.
+    try:
+        alertas_no_menu = contar_alertas(usuario, empresa)
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("Falha ao contar alertas do menu")
+        alertas_no_menu = 0
+
     return {
+        "menu_alertas": alertas_no_menu,
         "menu_empresa": empresa,
         "menu_lojas": lojas.order_by("nome"),
         "menu_loja_atual": partes.get("loja_slug"),

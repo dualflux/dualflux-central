@@ -12,9 +12,11 @@ from django.urls import path
 from contas import views as contas_views
 from contas.acesso import confirmar_codigo, esqueci_senha, nova_senha
 from contas.clientes import clientes
+from contas.configuracoes import configuracoes, horarios_loja
 from contas import equipe as equipe_views
 from contas.senha import SenhaAlterada, TrocarSenha
 from fluxo.api import EventosView, VendasView
+from fluxo.alertas import alertas
 from fluxo.rede import empresa_painel
 from fluxo.relatorios import relatorios
 from fluxo.views import loja_painel
@@ -47,6 +49,9 @@ urlpatterns = [
     path("<slug:empresa_slug>/", empresa_painel, name="empresa_inicio"),
     # Tela onde o cliente monta o relatorio (antes da rota da loja: "relatorios" nao e loja).
     path("<slug:empresa_slug>/relatorios/", relatorios, name="relatorios"),
+    path("<slug:empresa_slug>/alertas/", alertas, name="alertas"),
+    path("<slug:empresa_slug>/configuracoes/", configuracoes, name="configuracoes"),
+    path("<slug:empresa_slug>/configuracoes/horarios/<slug:loja_slug>/", horarios_loja, name="horarios_loja"),
     # Equipe: so o dono (gerentes da propria empresa).
     path("<slug:empresa_slug>/equipe/", equipe_views.equipe, name="equipe"),
     path("<slug:empresa_slug>/equipe/novo/", equipe_views.gerente_novo, name="gerente_novo"),

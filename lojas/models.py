@@ -49,7 +49,7 @@ class Regiao(models.Model):
 
 # Enderecos que ficam logo depois do nome da empresa (ex.: /rede/relatorios/):
 # uma loja com esse nome ficaria escondida atras da tela.
-SLUGS_LOJA_RESERVADOS = {"relatorios", "equipe"}
+SLUGS_LOJA_RESERVADOS = {"relatorios", "equipe", "alertas", "configuracoes"}
 
 
 def validar_slug_loja(valor):
