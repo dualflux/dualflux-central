@@ -11,7 +11,7 @@
   {# Inter: a fonte dos SaaS modernos, com numeros bem alinhados. #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet">
   <style>
     :root {
       /* Cores da MARCA DualFlux (tiradas da logo). */
@@ -19,86 +19,106 @@
       --marca-grafite: #14161a;
       --texto: #0f172a;
       --texto-apoio: #475569;
-      --fundo: #f4f6fa;
+      --fundo: #e9edf2;   /* um pouco mais escuro: as caixas brancas se destacam */
       --borda: #e6eaf0;
       --largura-menu: 256px;
     }
-    body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--fundo); color: var(--texto); }
+    body { margin: 0; font-family: "Inter", system-ui, sans-serif; background: var(--fundo); color: var(--texto);
+           -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1, "cv11" 1; }  /* numeros alinhados */
+    .ic { flex-shrink: 0; vertical-align: -0.18em; }
 
-    /* =================== MENU LATERAL (esquerda) =================== */
+    /* =================== MENU LATERAL (esquerda): branco, leve, icones de linha =================== */
     .lateral { position: fixed; top: 0; left: 0; bottom: 0; z-index: 60; width: var(--largura-menu);
-               box-sizing: border-box; display: flex; flex-direction: column; padding: 16px 12px;
-               background: #fff; border-right: 1px solid var(--borda); overflow-y: auto;
-               transition: transform .2s ease; }
-    .lateral-logo { display: block; padding: 4px 8px 18px; }
-    .lateral-logo img { height: 40px; display: block; }
-    .lateral-empresa { margin: 0 8px 8px; padding: 10px 12px; border-radius: 12px; background: #f6f8fc;
-                       border: 1px solid var(--borda); }
-    .lateral-empresa small { display: block; color: #94a3b8; font-size: .7rem; font-weight: 700;
-                             letter-spacing: .08em; text-transform: uppercase; }
-    .lateral-empresa strong { font-size: .95rem; }
-    .grupo { display: block; margin: 18px 12px 6px; color: #94a3b8; font-size: .7rem; font-weight: 700;
-             letter-spacing: .08em; text-transform: uppercase; }
-    .lateral nav a, .em-breve { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 2px 0;
-                                border-radius: 10px; font-size: .92rem; text-decoration: none; }
-    .lateral nav a { color: var(--texto); font-weight: 500; }
-    .lateral nav a:hover { background: #f1f5ff; color: var(--marca-azul); }
-    /* Item da tela aberta: fundo azul claro e uma barrinha azul a esquerda. */
-    .lateral nav a.ativo { background: #eaf1ff; color: var(--marca-azul); font-weight: 700;
-                           box-shadow: inset 3px 0 0 var(--marca-azul); }
-    .lateral nav .icone-loja { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
-                               border-radius: 8px; background: #eef2f7; font-size: .8rem; font-weight: 700;
-                               color: var(--texto-apoio); flex-shrink: 0; }
-    .lateral nav a.ativo .icone-loja { background: var(--marca-azul); color: #fff; }
-    .em-breve { color: #94a3b8; cursor: default; }
-    .em-breve em { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: #f1f3f5;
-                   font-size: .66rem; font-style: normal; font-weight: 700; text-transform: uppercase; }
-    .lateral-rodape { margin-top: auto; padding: 14px 12px 4px; color: #94a3b8; font-size: .75rem; }
+               box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 16px 12px 12px;
+               background: #fff; border-right: 1px solid #e3e7ed; overflow-y: auto; transition: transform .2s ease; }
+    .lateral .ic { flex-shrink: 0; }
+    .lateral-logo { display: block; padding: 2px 6px 4px; }
+    .lateral-logo img { height: 32px; display: block; }
 
-    /* Com menu, o conteudo comeca depois dele. */
+    /* Cartao da empresa */
+    .lateral-empresa { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 11px; border: 1px solid #e8ebf0; }
+    .lateral-empresa .emp-av { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px;
+                               border-radius: 9px; color: #fff; font-weight: 700; font-size: .85rem;
+                               background: linear-gradient(135deg, #0a5cff, #5b8cff); }
+    .lateral-empresa div { min-width: 0; }
+    .lateral-empresa strong { display: block; font-size: .9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lateral-empresa small { color: #94a3b8; font-size: .76rem; }
+
+    /* Busca de loja (Ctrl+K) */
+    .busca-loja { display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 9px; background: #f4f6f9; color: #94a3b8; }
+    .busca-loja input { flex: 1; min-width: 0; height: 36px; padding: 0; margin: 0; border: 0; background: transparent;
+                        font: inherit; font-size: .85rem; color: var(--texto); outline: none; }
+    .busca-loja kbd { font: inherit; font-size: .7rem; padding: 1px 6px; border-radius: 5px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; }
+    .busca-loja:focus-within { background: #fff; box-shadow: 0 0 0 2px #c9d8ff; }
+
+    /* Itens */
+    .lateral nav { display: flex; flex-direction: column; gap: 2px; }
+    .grupo { display: block; margin: 14px 10px 4px; color: #94a3b8; font-size: .72rem; font-weight: 600; letter-spacing: .03em; }
+    .lateral nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: .9rem;
+                     font-weight: 500; color: #475569; text-decoration: none; transition: background .12s, color .12s; }
+    .lateral nav a:hover { background: #f4f6f9; color: var(--texto); }
+    .lateral nav a.ativo { background: #f1f5ff; color: var(--marca-azul); font-weight: 600; }
+    .lateral nav a small { margin-left: auto; font-size: .7rem; color: #94a3b8; }
+    .ponto-loja { width: 8px; height: 8px; margin: 0 6px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; }
+    .ponto-loja.on { background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, .15); }
+    .ponto-loja.off { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, .15); }
+    .contador-alertas { margin-left: auto; padding: 1px 7px; border-radius: 999px; background: #fee2e2; color: #b91c1c;
+                        font-size: .72rem; font-weight: 600; }
+    .sem-lojas { padding: 8px 10px; color: #94a3b8; font-size: .85rem; }
+
+    /* Usuario no rodape do menu */
+    .lateral-usuario { position: relative; margin-top: auto; padding-top: 10px; border-top: 1px solid #eef1f5; }
+    .lateral-usuario summary { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; cursor: pointer; list-style: none; }
+    .lateral-usuario summary::-webkit-details-marker { display: none; }
+    .lateral-usuario summary:hover, .lateral-usuario[open] summary { background: #f4f6f9; }
+    .lateral-usuario .u-av { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 34px; height: 34px;
+                             border-radius: 50%; background: #e8eefc; color: var(--marca-azul); font-weight: 600; font-size: .85rem; }
+    .lateral-usuario .u-txt { flex: 1; min-width: 0; line-height: 1.25; }
+    .lateral-usuario strong { display: block; font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lateral-usuario small { display: block; color: #94a3b8; font-size: .75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lateral-usuario .u-seta { color: #94a3b8; display: flex; transition: transform .15s; }
+    .lateral-usuario[open] .u-seta { transform: rotate(180deg); }
+    .lateral-usuario .menu { top: auto; bottom: calc(100% + 6px); left: 0; right: 0; width: auto; }
+
+    /* Com menu: o conteudo comeca depois dele; a barra do topo so aparece no celular/tablet. */
     .com-menu .area { margin-left: var(--largura-menu); }
-    .com-menu header .logo { display: none; }   /* a logo ja esta no menu */
+    .com-menu header { display: none; }
     .botao-menu, .fundo-menu { display: none; }
 
-    /* =================== BARRA DO TOPO =================== */
+    /* =================== BARRA DO TOPO (telas sem menu e celular) =================== */
     header { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between;
              gap: 12px; padding: 10px 24px; background: rgba(255, 255, 255, .92); border-bottom: 1px solid var(--borda);
              backdrop-filter: blur(8px); }
-    .com-menu header { justify-content: flex-end; }
-    header .logo img { height: 38px; display: block; }
+    header .logo img { height: 34px; display: block; }
     .botao-menu { align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 10px;
-                  border: 1px solid var(--borda); background: #fff; font-size: 1.3rem; cursor: pointer; }
+                  border: 1px solid var(--borda); background: #fff; cursor: pointer; color: #334155; }
 
-    /* ---------- Area do usuario: avatar + nome + papel, com menu ao clicar ---------- */
+    /* ---------- Menu do usuario (no topo, nas telas sem menu lateral) ---------- */
     .conta { position: relative; }
-    /* <details>/<summary>: menu nativo do navegador, sem JavaScript (funciona em qualquer aparelho). */
     .conta summary { display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 6px; border-radius: 999px;
-                     border: 1px solid var(--borda); background: #fff; cursor: pointer; list-style: none;
-                     transition: box-shadow .15s, border-color .15s; }
+                     border: 1px solid var(--borda); background: #fff; cursor: pointer; list-style: none; }
     .conta summary::-webkit-details-marker { display: none; }
-    .conta summary:hover, .conta[open] summary { border-color: #c9d6ff; box-shadow: 0 4px 14px rgba(10, 92, 255, .12); }
-    .avatar { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px;
-              border-radius: 50%; color: #fff; font-weight: 700; font-size: .95rem;
-              background: linear-gradient(135deg, #0a5cff, #3b82f6); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .15); }
+    .avatar { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 34px; height: 34px;
+              border-radius: 50%; background: #e8eefc; color: var(--marca-azul); font-weight: 600; font-size: .85rem; }
     .conta-texto { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
-    .conta-nome { font-weight: 700; font-size: .9rem; color: var(--texto); white-space: nowrap; overflow: hidden;
-                  text-overflow: ellipsis; max-width: 220px; }
-    .conta-papel { font-size: .76rem; color: var(--texto-apoio); white-space: nowrap; overflow: hidden;
-                   text-overflow: ellipsis; max-width: 220px; }
+    .conta-nome { font-weight: 600; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+    .conta-papel { font-size: .75rem; color: var(--texto-apoio); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
     .seta { color: var(--texto-apoio); font-size: .75rem; transition: transform .15s; }
     .conta[open] .seta { transform: rotate(180deg); }
-    .menu { position: absolute; right: 0; top: calc(100% + 8px); width: 260px; padding: 8px; border-radius: 14px;
-            background: #fff; border: 1px solid var(--borda); box-shadow: 0 16px 40px rgba(15, 23, 42, .14); }
-    .menu-email { padding: 10px 12px; font-size: .82rem; color: var(--texto-apoio); word-break: break-all;
-                  border-bottom: 1px solid var(--borda); margin-bottom: 6px; }
-    .menu-email strong { display: block; color: var(--texto); font-size: .9rem; margin-bottom: 2px; word-break: normal; }
+    .menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 70; width: 260px; padding: 6px; border-radius: 12px;
+            background: #fff; border: 1px solid #e3e7ed; box-shadow: 0 16px 40px rgba(15, 23, 42, .14); }
+    .menu-email { padding: 9px 10px; font-size: .8rem; color: var(--texto-apoio); word-break: break-all; border-bottom: 1px solid #eef1f5; margin-bottom: 4px; }
+    .menu-email strong { display: block; color: var(--texto); font-size: .88rem; margin-bottom: 2px; word-break: normal; }
     .menu a, .menu button { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;
-                            padding: 10px 12px; margin: 0; border: 0; border-radius: 10px; background: none;
-                            color: var(--texto); font: inherit; font-size: .9rem; text-align: left; text-decoration: none;
-                            cursor: pointer; }
-    .menu a:hover, .menu button:hover { background: #f1f5ff; color: var(--marca-azul); }
-    .menu form { margin: 0; border-top: 1px solid var(--borda); padding-top: 6px; margin-top: 6px; }
+                            padding: 9px 10px; margin: 0; border: 0; border-radius: 8px; background: none;
+                            color: #334155; font: inherit; font-size: .88rem; text-align: left; text-decoration: none; cursor: pointer; }
+    .menu a:hover, .menu button:hover { background: #f4f6f9; color: var(--texto); }
+    .menu form { margin: 0; border-top: 1px solid #eef1f5; padding-top: 4px; margin-top: 4px; }
     .menu .sair:hover { background: #fff1f2; color: #dc2626; }
+
+    /* Telas grandes (PC, notebook, totem): tudo 10% menor, como o zoom de 90% do navegador.
+       Celular e tablet nao mudam: la o tamanho ja foi ajustado para o dedo. */
+    @media (min-width: 1100px) { html { zoom: .9; } }
 
     /* =================== Elementos comuns das telas =================== */
     main { max-width: 720px; margin: 28px auto; padding: 0 20px; }
@@ -121,8 +141,7 @@
     @media (max-width: 1024px) {
       .com-menu .area { margin-left: 0; }
       .lateral { transform: translateX(-100%); box-shadow: 0 0 40px rgba(15, 23, 42, .2); }
-      .com-menu header { justify-content: space-between; }
-      .com-menu header .logo { display: block; }
+      .com-menu header { display: flex; }
       .botao-menu { display: flex; }
       /* Quando a caixinha escondida esta marcada, a gaveta aparece e o fundo escurece. */
       #abre-menu:checked ~ .lateral { transform: none; }
@@ -148,31 +167,62 @@
       <a class="lateral-logo" href="{% url 'empresa_inicio' menu_empresa.slug %}">
         <img src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
       </a>
-      <div class="lateral-empresa"><small>Empresa</small><strong>{{ menu_empresa.nome }}</strong></div>
+
+      <div class="lateral-empresa">
+        <span class="emp-av">{{ menu_empresa.nome|first|upper }}</span>
+        <div><strong>{{ menu_empresa.nome }}</strong><small>{{ menu_lojas|length }} loja{{ menu_lojas|length|pluralize }}</small></div>
+      </div>
+
+      {% if menu_lojas|length > 3 %}
+        <label class="busca-loja"><svg width="16" height="16" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input type="search" id="busca-loja" placeholder="Buscar loja…" autocomplete="off"><kbd>Ctrl K</kbd></label>
+      {% endif %}
 
       <nav>
-        <span class="grupo">Análises</span>
-        <a href="{% url 'empresa_inicio' menu_empresa.slug %}" class="{% if menu_tela == 'empresa_inicio' %}ativo{% endif %}">📊 Visão da rede</a>
+        <a href="{% url 'empresa_inicio' menu_empresa.slug %}" class="{% if menu_tela == 'empresa_inicio' %}ativo{% endif %}"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M104,40H56A16,16,0,0,0,40,56v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,104,40Zm0,64H56V56h48v48Zm96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,64H152V56h48v48Zm-96,32H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm0,64H56V152h48v48Zm96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Zm0,64H152V152h48v48Z"/></svg><span>Visão da rede</span></a>
 
         <span class="grupo">Lojas</span>
         {% for loja in menu_lojas %}
-          <a href="{% url 'loja_painel' menu_empresa.slug loja.slug %}" class="{% if loja.slug == menu_loja_atual %}ativo{% endif %}">
-            <span class="icone-loja">{{ loja.nome|cut:"Loja "|first|upper }}</span>{{ loja.nome }}
+          {% with s=loja.status %}
+          <a href="{% url 'loja_painel' menu_empresa.slug loja.slug %}" class="item-loja {% if loja.slug == menu_loja_atual %}ativo{% endif %}" data-nome="{{ loja.nome|lower }}">
+            <span class="ponto-loja {% if s %}{% if s.online %}on{% else %}off{% endif %}{% endif %}"></span>
+            <span>{{ loja.nome }}</span>
+            <small>{% if s %}{% if s.online %}online{% else %}sem sinal{% endif %}{% endif %}</small>
           </a>
+          {% endwith %}
         {% empty %}
-          <span class="em-breve">Nenhuma loja disponível</span>
+          <span class="sem-lojas">Nenhuma loja disponível</span>
         {% endfor %}
 
         <span class="grupo">Gestão</span>
-        <a href="{% url 'relatorios' menu_empresa.slug %}" class="{% if menu_tela == 'relatorios' %}ativo{% endif %}">📈 Relatórios</a>
-        <span class="em-breve">🔔 Alertas <em>em breve</em></span>
+        <a href="{% url 'relatorios' menu_empresa.slug %}" class="{% if menu_tela == 'relatorios' %}ativo{% endif %}"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg><span>Relatórios</span></a>
+        <a href="{% url 'alertas' menu_empresa.slug %}" class="{% if menu_tela == 'alertas' %}ativo{% endif %}"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></svg><span>Alertas</span>{% if menu_alertas %}<span class="contador-alertas">{{ menu_alertas }}</span>{% endif %}</a>
         {% if user.papel != "gerente" %}
-          <a href="{% url 'equipe' menu_empresa.slug %}" class="{% if menu_tela == 'equipe' or menu_tela == 'gerente_novo' or menu_tela == 'gerente_editar' %}ativo{% endif %}">👥 Equipe</a>
+          <a href="{% url 'equipe' menu_empresa.slug %}" class="{% if menu_tela == 'equipe' or menu_tela == 'gerente_novo' or menu_tela == 'gerente_editar' %}ativo{% endif %}"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"/></svg><span>Equipe</span></a>
         {% endif %}
-        <span class="em-breve">⚙️ Configurações <em>em breve</em></span>
+        <a href="{% url 'configuracoes' menu_empresa.slug %}" class="{% if menu_tela == 'configuracoes' or menu_tela == 'horarios_loja' %}ativo{% endif %}"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"/></svg><span>Configurações</span></a>
       </nav>
 
-      <div class="lateral-rodape">DualFlux &middot; fluxo e conversão</div>
+      {# Usuario no rodape do menu (o menu de opcoes abre para cima). #}
+      <details class="lateral-usuario">
+        <summary>
+          <span class="u-av">{{ user.first_name|default:user.email|first|upper }}</span>
+          <span class="u-txt">
+            <strong>{% if user.first_name %}{{ user.get_full_name }}{% else %}{{ user.email }}{% endif %}</strong>
+            <small>{{ user.get_papel_display }}</small>
+          </span>
+          <span class="u-seta"><svg width="16" height="16" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"/></svg></span>
+        </summary>
+        <div class="menu">
+          <div class="menu-email"><strong>Conectado como</strong>{{ user.email }}</div>
+          {% if user.papel == "admin" %}<a href="{% url 'clientes' %}"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg> Clientes</a>{% endif %}
+          {% if user.is_staff %}<a href="{% url 'admin:index' %}"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"/></svg> Administração DualFlux</a>{% endif %}
+          <a href="{% url 'trocar_senha' %}"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176A15.86,15.86,0,0,0,24,187.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A79.73,79.73,0,0,0,160,176h.1A80,80,0,0,0,216.57,39.43ZM224,98.1c-1.09,34.09-29.75,61.86-63.89,61.9H160a63.7,63.7,0,0,1-23.65-4.51,8,8,0,0,0-8.84,1.68L116.69,168H96a8,8,0,0,0-8,8v16H72a8,8,0,0,0-8,8v16H40V187.31l58.83-58.82a8,8,0,0,0,1.68-8.84A63.72,63.72,0,0,1,96,95.92c0-34.14,27.81-62.8,61.9-63.89A64,64,0,0,1,224,98.1ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"/></svg> Trocar senha</a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="sair"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></svg> Sair</button>
+          </form>
+        </div>
+      </details>
     </aside>
     {# Fundo escuro atras da gaveta: clicar nele fecha o menu. #}
     <label for="abre-menu" class="fundo-menu" aria-label="Fechar menu"></label>
@@ -181,7 +231,7 @@
   <div class="area">
     <header>
       <span class="inicio-barra">
-        {% if menu_empresa %}<label for="abre-menu" class="botao-menu" aria-label="Abrir menu">☰</label>{% endif %}
+        {% if menu_empresa %}<label for="abre-menu" class="botao-menu" aria-label="Abrir menu"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H80V200H40ZM216,200H96V56H216V200Z"/></svg></label>{% endif %}
         <a class="logo" href="{% url 'inicio' %}">
           <img src="{% static 'img/dualflux-logo.png' %}" alt="DualFlux">
         </a>
@@ -195,7 +245,7 @@
               <span class="conta-nome">{% if user.first_name %}{{ user.get_full_name }}{% else %}{{ user.email|truncatechars:26 }}{% endif %}</span>
               <span class="conta-papel">{{ user.get_papel_display }}{% if user.empresa %} · {{ user.empresa.nome }}{% endif %}</span>
             </span>
-            <span class="seta">▾</span>
+            <span class="seta"><svg width="14" height="14" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></span>
           </summary>
           <div class="menu">
             <div class="menu-email">
@@ -203,20 +253,20 @@
               {{ user.email }}
             </div>
             {% if user.empresa %}
-              <a href="{% url 'empresa_inicio' user.empresa.slug %}">🏪 Minhas lojas</a>
+              <a href="{% url 'empresa_inicio' user.empresa.slug %}"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Zm50,56h48v8a24,24,0,0,1-48,0Zm-16,0v8a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8ZM200,208H56V151.2a40.57,40.57,0,0,0,8,.8,40,40,0,0,0,32-16,40,40,0,0,0,64,0,40,40,0,0,0,32,16,40.57,40.57,0,0,0,8-.8Zm4.93-75.8a8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48v8A24,24,0,0,1,204.93,132.2Z"/></svg> Minhas lojas</a>
             {% endif %}
             {% if user.papel == "admin" %}
-              <a href="{% url 'clientes' %}">🏢 Clientes</a>
+              <a href="{% url 'clientes' %}"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg> Clientes</a>
             {% endif %}
             {% if user.is_staff %}
-              <a href="{% url 'admin:index' %}">⚙️ Administração DualFlux</a>
+              <a href="{% url 'admin:index' %}"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"/></svg> Administração DualFlux</a>
             {% endif %}
-            <a href="{% url 'trocar_senha' %}">🔑 Trocar senha</a>
+            <a href="{% url 'trocar_senha' %}"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176A15.86,15.86,0,0,0,24,187.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A79.73,79.73,0,0,0,160,176h.1A80,80,0,0,0,216.57,39.43ZM224,98.1c-1.09,34.09-29.75,61.86-63.89,61.9H160a63.7,63.7,0,0,1-23.65-4.51,8,8,0,0,0-8.84,1.68L116.69,168H96a8,8,0,0,0-8,8v16H72a8,8,0,0,0-8,8v16H40V187.31l58.83-58.82a8,8,0,0,0,1.68-8.84A63.72,63.72,0,0,1,96,95.92c0-34.14,27.81-62.8,61.9-63.89A64,64,0,0,1,224,98.1ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"/></svg> Trocar senha</a>
             {# Sair e feito por POST (formulario), nao por link: assim um link malicioso #}
             {# em outro site nao consegue deslogar o usuario sem ele clicar. #}
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}
-              <button type="submit" class="sair">↪ Sair</button>
+              <button type="submit" class="sair"><svg width="18" height="18" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></svg> Sair</button>
             </form>
           </div>
         </details>
@@ -226,5 +276,18 @@
       {% block conteudo %}{% endblock %}
     </main>
   </div>
+  <script>
+    (function () {
+      const busca = document.getElementById("busca-loja");
+      if (!busca) return;
+      busca.addEventListener("input", () => {
+        const termo = busca.value.trim().toLowerCase();
+        document.querySelectorAll(".item-loja").forEach((a) => { a.style.display = a.dataset.nome.includes(termo) ? "" : "none"; });
+      });
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); busca.focus(); }
+      });
+    })();
+  </script>
 </body>
 </html>
