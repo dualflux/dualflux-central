@@ -1,0 +1,9 @@
+<div class="alerta">
+  <span class="faixa"></span>
+  <div>
+    <span class="loja">{{ a.loja.nome }}</span>
+    <strong>{{ a.titulo }}</strong>
+    <p>{{ a.texto }}</p>
+  </div>
+  <a href="{% url 'loja_painel' empresa.slug a.loja.slug %}">Ver loja →</a>
+</div>

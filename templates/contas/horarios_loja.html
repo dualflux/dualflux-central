@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block titulo %}Horários - {{ loja.nome }} - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  main { max-width: 720px; }
+  .caixa-h { margin: 8px 0; padding: 22px; border-radius: 18px; background: #fff; border: 1px solid var(--borda);
+             box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05); }
+  h1 { margin: 0 0 4px; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+  .sub { margin: 0 0 16px; color: var(--texto-apoio); }
+  .erro-geral { margin-bottom: 14px; padding: 12px 14px; border-radius: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+  .dia { display: grid; grid-template-columns: 110px 120px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef2f7; }
+  .dia strong { font-size: .98rem; }
+  .estado { display: flex; align-items: center; gap: 8px; font-size: .88rem; font-weight: 600; color: #334155; cursor: pointer; }
+  .estado input { width: 18px; height: 18px; accent-color: #0a5cff; }
+  .horas { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .horas input { height: 40px; padding: 0 10px; border: 1.5px solid var(--borda); border-radius: 10px; font: inherit; background: #f4f7fb; }
+  .horas input:focus { outline: none; border-color: #0a5cff; background: #fff; }
+  .dia.fechada .horas { opacity: .35; pointer-events: none; }
+  .fechada-txt { display: none; color: #64748b; font-size: .88rem; }
+  .dia.fechada .fechada-txt { display: inline; }
+  .erro-dia { grid-column: 2 / -1; color: #b91c1c; font-size: .82rem; font-weight: 600; }
+  .copiar { margin: 14px 0 4px; border: 0; background: none; color: #0a5cff; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
+  .nota { margin: 8px 0 16px; color: var(--texto-apoio); font-size: .84rem; }
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; }
+  .acoes button, .acoes a { flex: 1; min-width: 150px; height: 48px; display: flex; align-items: center; justify-content: center; border: 0;
+                            border-radius: 11px; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+  .acoes button { color: #fff; background: linear-gradient(180deg, #2a72ff, #0a5cff); }
+  .acoes a { color: #334155; background: #f1f5f9; }
+  @media (max-width: 560px) {
+    main { padding: 0 12px; }
+    .caixa-h { padding: 18px 14px; }
+    .dia { grid-template-columns: 1fr auto; }
+    .dia .horas { grid-column: 1 / -1; }
+  }
+</style>
+
+<div class="caixa-h">
+  <h1>Horários</h1>
+  <p class="sub">{{ loja.nome }}</p>
+  {% for e in erros %}<div class="erro-geral" role="alert">{{ e }}</div>{% endfor %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for l in linhas %}
+      <div class="dia {% if not l.aberta %}fechada{% endif %}" data-dia="{{ l.dia }}">
+        <strong>{{ l.nome }}</strong>
+        <label class="estado"><input type="checkbox" name="aberta_{{ l.dia }}" value="1" {% if l.aberta %}checked{% endif %}> Aberta</label>
+        <div class="horas">
+          <input type="time" name="abre_{{ l.dia }}" value="{{ l.abre }}" aria-label="{{ l.nome }}: abre"> às
+          <input type="time" name="fecha_{{ l.dia }}" value="{{ l.fecha }}" aria-label="{{ l.nome }}: fecha">
+          <span class="fechada-txt">Fechada</span>
+        </div>
+        {% if l.erro %}<span class="erro-dia">{{ l.erro }}</span>{% endif %}
+      </div>
+    {% endfor %}
+    <button type="button" class="copiar" id="copiar">↓ Copiar o horário de segunda para terça a sexta</button>
+    <p class="nota">Loja que fecha à meia-noite: use 23:59.</p>
+    <div class="acoes">
+      <button type="submit">Salvar horários</button>
+      <a href="{% url 'configuracoes' empresa.slug %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Marcar/desmarcar "Aberta" acende ou apaga os campos de horario do dia.
+  document.querySelectorAll(".dia").forEach((linha) => {
+    const caixa = linha.querySelector("input[type=checkbox]");
+    caixa.addEventListener("change", () => linha.classList.toggle("fechada", !caixa.checked));
+  });
+  // Atalho: copia segunda (aberta/abre/fecha) para terca a sexta.
+  document.getElementById("copiar").addEventListener("click", () => {
+    const seg = document.querySelector('.dia[data-dia="0"]');
+    for (let d = 1; d <= 4; d++) {
+      const linha = document.querySelector(`.dia[data-dia="${d}"]`);
+      ["abre", "fecha"].forEach((c) => (linha.querySelector(`[name=${c}_${d}]`).value = seg.querySelector(`[name=${c}_0]`).value));
+      const caixa = linha.querySelector("input[type=checkbox]");
+      caixa.checked = seg.querySelector("input[type=checkbox]").checked;
+      linha.classList.toggle("fechada", !caixa.checked);
+    }
+  });
+</script>
+{% endblock %}

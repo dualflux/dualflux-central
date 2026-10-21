@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block titulo %}Configurações - DualFlux{% endblock %}
+
+{% block conteudo %}
+<style>
+  main { max-width: 860px; }
+  .cabeca { margin: 8px 0 16px; }
+  .cabeca h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; }
+  .cabeca p { margin: 4px 0 0; color: var(--texto-apoio); }
+  .bloco-cfg { margin-bottom: 16px; padding: 22px; border-radius: 18px; background: #fff; border: 1px solid var(--borda);
+               box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05); }
+  .bloco-cfg h2 { margin: 0 0 4px; font-size: 1.08rem; font-weight: 800; }
+  .bloco-cfg .sub { margin: 0 0 16px; color: var(--texto-apoio); font-size: .9rem; }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .campo { min-width: 0; margin-bottom: 12px; }
+  .campo label { display: block; margin: 0 0 6px; font-size: .85rem; font-weight: 600; color: #1e293b; }
+  .campo input { width: 100%; height: 44px; padding: 0 12px; box-sizing: border-box; border: 1.5px solid var(--borda);
+                 border-radius: 11px; font: inherit; background: #f4f7fb; }
+  .campo input:focus { outline: none; border-color: #0a5cff; background: #fff; box-shadow: 0 0 0 4px rgba(10,92,255,.14); }
+  .campo input:disabled { color: #64748b; }
+  .linha-acoes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .botao { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 18px; border: 0; border-radius: 11px;
+           font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+  .botao.azul { color: #fff; background: linear-gradient(180deg, #2a72ff, #0a5cff); }
+  .botao.claro { color: #334155; background: #f1f5f9; }
+  .ok { color: #047857; font-weight: 700; }
+  .loja-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #eef2f7; }
+  .loja-h:first-of-type { border-top: 0; padding-top: 4px; }
+  .loja-h div { min-width: 0; }
+  .loja-h strong { display: block; }
+  .loja-h small { display: block; color: var(--texto-apoio); font-size: .84rem; line-height: 1.45; }
+  @media (max-width: 640px) {
+    main { margin: 16px auto; padding: 0 12px; }
+    .bloco-cfg { padding: 18px 16px; }
+    .duas { grid-template-columns: 1fr; }
+    .loja-h { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<div class="cabeca">
+  <h1>Configurações</h1>
+  <p>{{ empresa.nome }}</p>
+</div>
+
+<section class="bloco-cfg">
+  <h2>Minha conta</h2>
+  <p class="sub">{{ user.get_papel_display }}</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="duas">
+      <div class="campo"><label for="id_first_name">Nome</label>
+        <input type="text" name="first_name" id="id_first_name" value="{{ form.first_name.value|default:'' }}" required></div>
+      <div class="campo"><label for="id_last_name">Sobrenome</label>
+        <input type="text" name="last_name" id="id_last_name" value="{{ form.last_name.value|default:'' }}"></div>
+    </div>
+    <div class="campo"><label>E-mail (é o seu login)</label><input type="email" value="{{ user.email }}" disabled></div>
+    <div class="linha-acoes">
+      <button type="submit" class="botao azul">Salvar</button>
+      <a class="botao claro" href="{% url 'trocar_senha' %}">🔑 Trocar senha</a>
+      {% if salvo %}<span class="ok">✓ Salvo</span>{% endif %}
+    </div>
+  </form>
+</section>
+
+{% if edita_horarios %}
+<section class="bloco-cfg">
+  <h2>Horários das lojas</h2>
+  <p class="sub">Usados no painel (abertura e fechamento, entradas fora do horário) e nos alertas.</p>
+  {% for item in lojas %}
+    <div class="loja-h">
+      <div><strong>{{ item.loja.nome }}</strong><small>{{ item.resumo }}</small></div>
+      <a class="botao claro" href="{% url 'horarios_loja' empresa.slug item.loja.slug %}">Editar horários</a>
+    </div>
+  {% empty %}
+    <p class="sub">Nenhuma loja ativa.</p>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}
