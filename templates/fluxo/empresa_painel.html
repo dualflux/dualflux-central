@@ -11,7 +11,7 @@
   .kpis > *, .grade-lojas > *, .duas > *, .insights ul > * { min-width: 0; }
   canvas { max-width: 100%; }
   .cartao h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding-bottom: 10px;
-               font-size: 1.02rem; font-weight: 700; color: var(--texto); border-bottom: 1px solid var(--borda); }
+               font-size: 1.02rem; font-weight: 600; color: var(--texto); border-bottom: 1px solid var(--borda); }
   .cartao h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--marca-azul); flex-shrink: 0; }
   .cartao h2 + .nota { margin: -4px 0 14px; font-size: .9rem; font-weight: 500; color: var(--texto-apoio); }
   .rolagem { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -25,7 +25,7 @@
           box-shadow: 0 24px 48px rgba(15, 23, 42, .22); }
   .hero-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
   .hero-rotulo { color: #9db8ff; font-size: .9rem; font-weight: 600; }
-  .hero h1 { margin: 4px 0 6px; font-size: 2.3rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+  .hero h1 { margin: 4px 0 6px; font-size: 2.3rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; }
   .hero-meta { margin: 0; color: #cbd5e1; font-size: .95rem; }
   .status { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px;
             background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); font-weight: 700; }
@@ -35,7 +35,16 @@
   .status.parcial .ponto { background: #f59e0b; box-shadow: 0 0 0 5px rgba(245, 158, 11, .22); }
   .status.offline .ponto { background: #ef4444; box-shadow: 0 0 0 5px rgba(239, 68, 68, .22); }
   .hero-periodo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
-  .hero-periodo .data { color: #e2e8f0; font-weight: 600; }
+  .hero-periodo .data { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 9px;
+                        background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .16);
+                        color: #e2e8f0; font-size: .9rem; font-weight: 500; }
+  .hero-periodo .data .ic, .hero-meta .ic { color: #9db8ff; }
+  /* Selo do periodo no titulo dos cartoes (igual ao painel da loja). */
+  .cartao h2 { flex-wrap: wrap; }
+  .cartao h2 .periodo { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 4px 10px;
+                        border-radius: 8px; background: #fff; border: 1px solid #e5e8ed; color: #475569;
+                        font-size: .78rem; font-weight: 500; white-space: nowrap; }
+  .cartao h2 .periodo .ic { color: #64748b; }
   .seletor { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08);
              max-width: 100%; overflow-x: auto; }
   .seletor a { padding: 7px 15px; border-radius: 999px; color: #e2e8f0; text-decoration: none; font-weight: 600;
@@ -45,7 +54,7 @@
   .kpi { padding: 16px 18px; border-radius: 16px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
   .kpi.principal { background: linear-gradient(135deg, rgba(10, 92, 255, .65), rgba(10, 92, 255, .25)); border-color: rgba(140, 175, 255, .55); }
   .kpi-nome { color: #cbd5e1; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-  .kpi strong { display: block; margin: 6px 0 8px; font-size: 2rem; font-weight: 800; letter-spacing: -.02em;
+  .kpi strong { display: block; margin: 6px 0 8px; font-size: 2rem; font-weight: 650; letter-spacing: -.02em;
                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .kpi .tendencia { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
   .delta { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
@@ -62,12 +71,16 @@
                       background: linear-gradient(180deg, var(--entradas), var(--vendas)); }
   .insights-cabeca { display: flex; align-items: center; gap: 12px; }
   .insights-cabeca .icone { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-                            width: 46px; height: 46px; border-radius: 13px; font-size: 1.35rem; background: #fef9c3; }
-  .insights-cabeca h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
+                            width: 46px; height: 46px; border-radius: 13px; font-size: 1.35rem; background: #fef9c3; color: #a16207; }
+  .insights-cabeca h2 { margin: 0; font-size: 1.2rem; font-weight: 650; }
   .insights-cabeca p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .9rem; }
   .insights ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 16px 0 0; }
   .insight { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid #eef2f7; background: #f8fafc; }
-  .insight .ins-icone { font-size: 1.35rem; line-height: 1.2; }
+  .insight .ins-icone { display: flex; padding-top: 1px; color: #2563eb; }
+  .insight.alerta .ins-icone { color: #dc2626; }
+  .insight.aviso .ins-icone { color: #d97706; }
+  .insight.pico .ins-icone { color: #ea580c; }
+  .insight.tendencia .ins-icone { color: #059669; }
   .insight p { margin: 0; color: #1e293b; line-height: 1.5; font-size: .95rem; }
   .insight.alerta { background: #fff5f5; border-color: #fee2e2; }
   .insight.pico { background: #fff7ed; border-color: #ffedd5; }
@@ -80,11 +93,11 @@
   .secao::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #d5dce6, transparent); }
   .secao .icone { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
                   width: 46px; height: 46px; border-radius: 13px; font-size: 1.35rem; }
-  .secao h2 { margin: 0; font-size: 1.28rem; font-weight: 800; letter-spacing: -.01em; color: var(--texto); }
+  .secao h2 { margin: 0; font-size: 1.28rem; font-weight: 650; letter-spacing: -.01em; color: var(--texto); }
   .secao p { margin: 2px 0 0; color: var(--texto-apoio); font-size: .92rem; }
-  .s-azul .icone { background: #e8f0ff; }
-  .s-verde .icone { background: #e7f8f1; }
-  .s-laranja .icone { background: #fff1e6; }
+  .s-azul .icone { background: #e8f0ff; color: #0a5cff; }
+  .s-verde .icone { background: #e7f8f1; color: #059669; }
+  .s-laranja .icone { background: #fff1e6; color: #ea580c; }
 
   /* ---------- Cartoes das lojas ---------- */
   .grade-lojas { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
@@ -96,7 +109,7 @@
   .loja-topo { display: flex; align-items: center; gap: 12px; }
   .loja-sigla { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0;
                 border-radius: 12px; background: linear-gradient(135deg, #0a5cff, #3b82f6); color: #fff;
-                font-weight: 800; font-size: 1.1rem; }
+                font-weight: 650; font-size: 1.1rem; }
   .loja-nome { flex: 1; min-width: 0; }
   .loja-nome strong { display: block; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .loja-nome small { color: var(--texto-apoio); }
@@ -110,7 +123,7 @@
   .loja-conversao { display: flex; align-items: baseline; justify-content: space-between; margin: 16px 0 6px;
                     padding: 12px 14px; border-radius: 12px; background: #f6f8fc; }
   .loja-conversao span { color: var(--texto-apoio); font-size: .85rem; font-weight: 600; }
-  .loja-conversao strong { font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; }
+  .loja-conversao strong { font-size: 1.9rem; font-weight: 650; letter-spacing: -.02em; }
   .loja.melhor .loja-conversao strong { color: #059669; }
   .loja.atencao .loja-conversao strong { color: #dc2626; }
   .loja-numeros { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 10px 0 4px; }
@@ -135,10 +148,10 @@
                      font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--borda); }
   table.ranking td { text-align: right; padding: 12px 8px; border-bottom: 1px solid var(--borda); }
   table.ranking th:first-child, table.ranking td:first-child { text-align: left; }
-  table.ranking td.conv { font-weight: 800; }
+  table.ranking td.conv { font-weight: 650; }
   table.ranking tr.melhor td.conv { color: #059669; }
   table.ranking tr.atencao td.conv { color: #dc2626; }
-  table.ranking tr.total td { font-weight: 800; background: #f6f8fc; border-bottom: 0; }
+  table.ranking tr.total td { font-weight: 650; background: #f6f8fc; border-bottom: 0; }
   .posicao { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-right: 8px;
              border-radius: 50%; background: #eef2f7; font-size: .78rem; font-weight: 700; }
   tr.melhor .posicao { background: #10b981; color: #fff; }
@@ -174,7 +187,7 @@
     <div>
       <span class="hero-rotulo">Visão da rede</span>
       <h1>{{ empresa.nome }}</h1>
-      <p class="hero-meta">🏪 {{ total_lojas }} loja{{ total_lojas|pluralize }}</p>
+      <p class="hero-meta"><svg width="16" height="16" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Zm50,56h48v8a24,24,0,0,1-48,0Zm-16,0v8a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8ZM200,208H56V151.2a40.57,40.57,0,0,0,8,.8,40,40,0,0,0,32-16,40,40,0,0,0,64,0,40,40,0,0,0,32,16,40.57,40.57,0,0,0,8-.8Zm4.93-75.8a8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48v8A24,24,0,0,1,204.93,132.2Z"/></svg> {{ total_lojas }} loja{{ total_lojas|pluralize }}</p>
     </div>
     {% if total_lojas %}
       <div class="status {% if lojas_online == total_lojas %}online{% elif lojas_online %}parcial{% else %}offline{% endif %}">
@@ -187,7 +200,7 @@
   </div>
 
   <div class="hero-periodo">
-    <span class="data">📅 {{ data_inicial|date:"d/m" }} a {{ data_final|date:"d/m/Y" }}</span>
+    <span class="data"><svg width="14" height="14" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>{{ data_inicial|date:"d/m" }} &ndash; {{ data_final|date:"d/m/Y" }}</span>
     <nav class="seletor">
       {% for periodo in periodos %}
         <a href="?dias={{ periodo }}" class="{% if periodo == dias %}ativo{% endif %}">{{ periodo }} dias</a>
@@ -241,12 +254,12 @@
 {% if insights %}
 <section class="insights">
   <div class="insights-cabeca">
-    <span class="icone">💡</span>
+    <span class="icone"><svg width="24" height="24" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M176,232a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,232Zm40-128a87.55,87.55,0,0,1-33.64,69.21A16.24,16.24,0,0,0,176,186v6a16,16,0,0,1-16,16H96a16,16,0,0,1-16-16v-6a16,16,0,0,0-6.23-12.66A87.59,87.59,0,0,1,40,104.49C39.74,56.83,78.26,17.14,125.88,16A88,88,0,0,1,216,104Zm-16,0a72,72,0,0,0-73.74-72c-39,.92-70.47,33.39-70.26,72.39a71.65,71.65,0,0,0,27.64,56.3A32,32,0,0,1,96,186v6h64v-6a32.15,32.15,0,0,1,12.47-25.35A71.65,71.65,0,0,0,200,104Zm-16.11-9.34a57.6,57.6,0,0,0-46.56-46.55,8,8,0,0,0-2.66,15.78c16.57,2.79,30.63,16.85,33.44,33.45A8,8,0,0,0,176,104a9,9,0,0,0,1.35-.11A8,8,0,0,0,183.89,94.66Z"/></svg></span>
     <div><h2>O que os números dizem</h2><p>Comparação automática entre as lojas no período</p></div>
   </div>
   <ul>
     {% for insight in insights %}
-      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{{ insight.icone }}</span><p>{{ insight.texto }}</p></li>
+      <li class="insight {{ insight.tipo }}"><span class="ins-icone">{% if insight.tipo == "alerta" %}<svg width="22" height="22" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z"/></svg>{% elif insight.tipo == "aviso" %}<svg width="22" height="22" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg>{% elif insight.tipo == "pico" %}<svg width="22" height="22" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z"/></svg>{% elif insight.tipo == "tendencia" %}<svg width="22" height="22" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M240,56v64a8,8,0,0,1-16,0V75.31l-82.34,82.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,212.69,64H168a8,8,0,0,1,0-16h64A8,8,0,0,1,240,56Z"/></svg>{% else %}<svg width="22" height="22" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg>{% endif %}</span><p>{{ insight.texto }}</p></li>
     {% endfor %}
   </ul>
 </section>
@@ -254,7 +267,7 @@
 
 {# ======================= LOJAS DA REDE ======================= #}
 <div class="secao s-azul">
-  <span class="icone">🏪</span>
+  <span class="icone"><svg width="24" height="24" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Zm50,56h48v8a24,24,0,0,1-48,0Zm-16,0v8a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8ZM200,208H56V151.2a40.57,40.57,0,0,0,8,.8,40,40,0,0,0,32-16,40,40,0,0,0,64,0,40,40,0,0,0,32,16,40.57,40.57,0,0,0,8-.8Zm4.93-75.8a8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48v8A24,24,0,0,1,204.93,132.2Z"/></svg></span>
   <div><h2>Lojas da rede</h2><p>Cada loja com os mesmos números, lado a lado</p></div>
 </div>
 <div class="grade-lojas">
@@ -303,12 +316,12 @@
 {# ======================= COMPARATIVO ======================= #}
 {% if total_lojas %}
 <div class="secao s-laranja">
-  <span class="icone">📊</span>
+  <span class="icone"><svg width="24" height="24" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg></span>
   <div><h2>Comparativo entre lojas</h2><p>Ranking pela conversão e a evolução da rede</p></div>
 </div>
 
 <div class="cartao">
-  <h2>Ranking de conversão</h2>
+  <h2>Ranking de conversão <span class="periodo"><svg width="14" height="14" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>{{ data_inicial|date:"d/m" }} &ndash; {{ data_final|date:"d/m/Y" }}</span></h2>
   <p class="nota">Ordenado da maior para a menor conversão. A linha da rede soma todas as lojas antes de dividir.</p>
   <div class="rolagem">
     <table class="ranking">
@@ -341,12 +354,12 @@
 
 <div class="duas">
   <div class="cartao">
-    <h2>Entradas e vendas por loja</h2>
+    <h2>Entradas e vendas por loja <span class="periodo"><svg width="14" height="14" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>{{ data_inicial|date:"d/m" }} &ndash; {{ data_final|date:"d/m/Y" }}</span></h2>
     <p class="nota">Mesma escala: a diferença entre as barras são as pessoas que não compraram.</p>
     <div class="area-grafico"><canvas id="grafico-lojas"></canvas></div>
   </div>
   <div class="cartao">
-    <h2>Evolução da rede, dia a dia</h2>
+    <h2>Evolução da rede, dia a dia <span class="periodo"><svg width="14" height="14" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>{{ data_inicial|date:"d/m" }} &ndash; {{ data_final|date:"d/m/Y" }}</span></h2>
     <p class="nota">Todas as lojas somadas.</p>
     <div class="area-grafico"><canvas id="grafico-rede"></canvas></div>
   </div>

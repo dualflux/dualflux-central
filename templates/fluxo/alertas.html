@@ -5,11 +5,15 @@
 <style>
   main { max-width: 920px; }
   .cabeca { margin: 8px 0 16px; }
-  .cabeca h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; }
+  .cabeca h1 { margin: 0; font-size: 1.6rem; font-weight: 650; letter-spacing: -.02em; }
   .cabeca p { margin: 4px 0 0; color: var(--texto-apoio); }
   .grupo-alertas { margin-bottom: 18px; }
-  .grupo-alertas h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 1rem; font-weight: 800; }
+  .grupo-alertas h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 1rem; font-weight: 650; }
   .grupo-alertas h2 .qtd { padding: 1px 9px; border-radius: 999px; font-size: .8rem; color: #fff; }
+  .grupo-alertas h2 .bola { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .g-urgente .bola { background: #dc2626; box-shadow: 0 0 0 4px rgba(220,38,38,.15); }
+  .g-atencao .bola { background: #ea580c; box-shadow: 0 0 0 4px rgba(234,88,12,.15); }
+  .g-boa .bola { background: #059669; box-shadow: 0 0 0 4px rgba(5,150,105,.15); }
   .g-urgente .qtd { background: #dc2626; } .g-atencao .qtd { background: #ea580c; } .g-boa .qtd { background: #059669; }
   .alerta { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto; gap: 14px; align-items: center; margin-bottom: 10px;
             padding: 14px 16px 14px 0; border-radius: 14px; background: #fff; border: 1px solid var(--borda);
@@ -45,19 +49,19 @@
 
 {% if urgentes %}
   <section class="grupo-alertas g-urgente">
-    <h2>🔴 Urgente <span class="qtd">{{ urgentes|length }}</span></h2>
+    <h2><span class="bola"></span>Urgente <span class="qtd">{{ urgentes|length }}</span></h2>
     {% for a in urgentes %}{% include "fluxo/_alerta.html" %}{% endfor %}
   </section>
 {% endif %}
 {% if atencao %}
   <section class="grupo-alertas g-atencao">
-    <h2>🟠 Atenção <span class="qtd">{{ atencao|length }}</span></h2>
+    <h2><span class="bola"></span>Atenção <span class="qtd">{{ atencao|length }}</span></h2>
     {% for a in atencao %}{% include "fluxo/_alerta.html" %}{% endfor %}
   </section>
 {% endif %}
 {% if boas %}
   <section class="grupo-alertas g-boa">
-    <h2>🟢 Boas notícias <span class="qtd">{{ boas|length }}</span></h2>
+    <h2><span class="bola"></span>Boas notícias <span class="qtd">{{ boas|length }}</span></h2>
     {% for a in boas %}{% include "fluxo/_alerta.html" %}{% endfor %}
   </section>
 {% endif %}

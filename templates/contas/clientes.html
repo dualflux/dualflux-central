@@ -14,12 +14,12 @@
             linear-gradient(135deg, #14161a 0%, #1d2230 100%);
           box-shadow: 0 24px 48px rgba(15, 23, 42, .22); }
   .hero-rotulo { color: #9db8ff; font-size: .9rem; font-weight: 600; }
-  .hero h1 { margin: 4px 0 6px; font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; }
+  .hero h1 { margin: 4px 0 6px; font-size: 2.2rem; font-weight: 650; letter-spacing: -.02em; }
   .hero p { margin: 0; color: #cbd5e1; }
   .totais { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 22px; }
   .total { min-width: 0; padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
   .total span { display: block; color: #cbd5e1; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-  .total strong { display: block; margin-top: 4px; font-size: 1.9rem; font-weight: 800; }
+  .total strong { display: block; margin-top: 4px; font-size: 1.9rem; font-weight: 650; }
   .total small { color: #94a3b8; font-size: .78rem; }
   .total.verde strong { color: #86efac; }
   .total.vermelho { background: rgba(239,68,68,.16); border-color: rgba(239,68,68,.4); }
@@ -38,7 +38,7 @@
   .empresa.alerta { border-color: #fecaca; box-shadow: 0 0 0 1px #fecaca, 0 8px 24px rgba(239,68,68,.08); }
   .empresa-topo { display: flex; align-items: center; gap: 12px; }
   .sigla { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px;
-           background: linear-gradient(135deg, #0a5cff, #3b82f6); color: #fff; font-weight: 800; font-size: 1.1rem; }
+           background: linear-gradient(135deg, #0a5cff, #3b82f6); color: #fff; font-weight: 650; font-size: 1.1rem; }
   .empresa.suspensa .sigla { background: #94a3b8; }
   .empresa-nome { flex: 1; min-width: 0; }
   .empresa-nome strong { display: block; font-size: 1.08rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -105,9 +105,9 @@
 </section>
 
 {% if totais.com_alerta %}
-  <div class="situacao atencao">⚠ {{ totais.com_alerta }} loja{{ totais.com_alerta|pluralize }} precisa{{ totais.com_alerta|pluralize:"m" }} de atenção. Elas aparecem primeiro.</div>
+  <div class="situacao atencao"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z"/></svg> {{ totais.com_alerta }} loja{{ totais.com_alerta|pluralize }} precisa{{ totais.com_alerta|pluralize:"m" }} de atenção. Elas aparecem primeiro.</div>
 {% elif totais.lojas %}
-  <div class="situacao ok">✓ Todas as lojas estão online e sem problemas.</div>
+  <div class="situacao ok"><svg width="20" height="20" class="ic" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg> Todas as lojas estão online e sem problemas.</div>
 {% endif %}
 
 {# ======================= EMPRESAS ======================= #}
